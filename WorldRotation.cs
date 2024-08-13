@@ -31,9 +31,8 @@ public class WorldRotation : MonoBehaviour
     }
  	class WorldState
     {
-        public float H;
-        public float V;
         public Vector3 P;
+        public Quaternion Q;
     }
 
     void Start()
@@ -59,12 +58,8 @@ public class WorldRotation : MonoBehaviour
                 string json = transforms[transforms.Length - 1];
                 WorldState worldState = JsonUtility.FromJson<WorldState>(json);
 
-                horizontalRotation = worldState.H;
-                verticalRotation = worldState.V;
-
-                transform.localEulerAngles = mainCamera.transform.right * verticalRotation + mainCamera.transform.up * horizontalRotation;
-
                 transform.position = worldState.P;
+                transform.rotation = worldState.Q;
             } 
         }
     }
@@ -73,8 +68,7 @@ public class WorldRotation : MonoBehaviour
     {
         WorldState worldState = new WorldState();
 
-        worldState.H = horizontalRotation;
-        worldState.V = verticalRotation;
+        worldState.Q = transform.rotation;
         worldState.P = transform.position;
 
         var json = JsonUtility.ToJson(worldState);
@@ -111,10 +105,16 @@ public class WorldRotation : MonoBehaviour
 				float inputX = deltaPosition.x * worldRotationSensitivity;
 				float inputY = deltaPosition.y * worldRotationSensitivity;
 
-                var q_r = Quaternion.AngleAxis(inputY, mainCamera.transform.right);
-                var q_up = Quaternion.AngleAxis(inputX, mainCamera.transform.up);
+                Quaternion q_r, q_u;
 
-                transform.rotation = q_r * q_up * transform.rotation;
+                if(Input.GetKey("space"))
+                    q_r = Quaternion.AngleAxis(inputY, mainCamera.transform.right);
+                else
+                    q_r = Quaternion.AngleAxis(inputY, mainCamera.transform.forward);
+
+                q_u = Quaternion.AngleAxis(-inputX, mainCamera.transform.up);
+
+                transform.rotation = q_r * q_u * transform.rotation;
 
 				lastPosition = currentPosition;
 			}
