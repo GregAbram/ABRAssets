@@ -13,9 +13,6 @@ public class WorldRotation : MonoBehaviour
 {
     public int button = 1;
     public float worldRotationSensitivity = 2f;
-   
-    float verticalRotation = 0f;
-    float horizontalRotation = 0f;
     Vector3 lastPosition;
     bool mouseIsDown = false;
     string worldFile = ""; 
@@ -49,7 +46,7 @@ public class WorldRotation : MonoBehaviour
 
     	worldFile = string.Format("{0}/world", transformCache);
 
-        if (false && File.Exists(worldFile))
+        if (File.Exists(worldFile))
         {
             string[] transforms = System.IO.File.ReadAllLines(worldFile);
 
@@ -108,9 +105,9 @@ public class WorldRotation : MonoBehaviour
                 Quaternion q_r, q_u;
 
                 if(Input.GetKey("space"))
-                    q_r = Quaternion.AngleAxis(inputY, mainCamera.transform.right);
-                else
                     q_r = Quaternion.AngleAxis(inputY, mainCamera.transform.forward);
+                else
+                    q_r = Quaternion.AngleAxis(inputY, mainCamera.transform.right);
 
                 q_u = Quaternion.AngleAxis(-inputX, mainCamera.transform.up);
 
