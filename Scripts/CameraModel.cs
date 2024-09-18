@@ -74,15 +74,24 @@ public class CameraModel : MonoBehaviour
             cam.projectionMatrix = PerspectiveOffCenter(ws * l, ws * r, ws * b, ws * t, cam.nearClipPlane, cam.farClipPlane);
             return;
         }
-      
-        string transformCache;
 
         Configurator cfg = ScriptableObject.CreateInstance<Configurator>();
 
-        if (! cfg.GetString("-transformCache", out transformCache))
-            transformCache = ".";
+        string s;
+        if (cfg.GetString("-mouseRotationSensitivity", out s))
+        {
+            mouseRotationSensitivity = Convert.ToSingle(s);
+        }
 
-        cameraFile = string.Format("{0}/camera", transformCache);
+        if (cfg.GetString("-mouseMovementSensitivity", out s))
+        {
+            mouseMovementSensitivity = Convert.ToSingle(s);
+        }
+        
+        if (! cfg.GetString("-transformCache", out s))
+            s = ".";
+
+        cameraFile = string.Format("{0}/camera", s);
 
         if (File.Exists(cameraFile))
         {
