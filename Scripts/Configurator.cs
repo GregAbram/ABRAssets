@@ -4,8 +4,9 @@ using UnityEngine;
 using System;
 using System.IO;
 using System.Linq;
-using Unity.VisualScripting;
-using UnityEngine.Rendering;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+
 
 public class Configurator : ScriptableObject
 {
@@ -29,20 +30,15 @@ public class Configurator : ScriptableObject
         if (envDir == null)
             envDir = home;
      
-        string cfgFile = Path.Combine(envDir, "svis.cfg");
+        string cfgFile = Path.Combine(envDir, "svis.json");
 
         try
         {
-            using (StreamReader reader = new StreamReader(cfgFile))
+            string s = File.ReadAllText(cfgFile);
+            JObject json = JObject.Parse(s);
+            foreach (var i in json)
             {
-                string line;
-                while ((line = reader.ReadLine()) != null)
-                {
-                    string[] parts = line.Split(':', 2);
-                    Debug.Log(line + " : X" + parts);
-                    if (parts.Length == 2)
-                        cfg['-' + parts[0]] = parts[1].Trim();
-                }
+                cfg[i.Key] = i.Value.ToString();
             }
         }
         catch
