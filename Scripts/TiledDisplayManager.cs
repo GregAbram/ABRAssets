@@ -346,20 +346,17 @@ public class TiledDisplayManager : ScriptableObject
             foreach (MySocket skt in child_sockets)
                 if (skt != null && skt.IsConnected())
                     skt.Receive(ref szBytes);
-
-            Debug.Log("XXXX " + szBytes);
         }
         else
         {
-            if (up != null && up.IsConnected())
-            {
-                up.Receive(ref szBytes);
-                sz = BitConverter.ToInt32(szBytes);
-                serialized_message = new byte[sz];
-                up.Receive(ref serialized_message);
-                up.Send(szBytes);     
-            }
-
+            if (up == null || !up.IsConnected())
+                throw(new Exception("parent has disappeared"));
+    
+            up.Receive(ref szBytes);
+            sz = BitConverter.ToInt32(szBytes);
+            serialized_message = new byte[sz];
+            up.Receive(ref serialized_message);
+            up.Send(szBytes);
         }
     }
     
