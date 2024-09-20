@@ -93,6 +93,48 @@ public class MySocket
 
 public class TiledDisplayManager : ScriptableObject
 {
+    [Serializable]
+    public class Master
+    {
+        public string host;
+        public string ip;
+        public float aspect;
+    };
+
+    [Serializable]
+    public class Dimensions
+    {
+        public int numTilesHeight;
+        public int numTilesWidth;
+        public int screenWidth;
+        public int screenHeight;
+        public int mullionHeight;
+        public int mullionWidth;
+        public bool fullScreen;
+        public float aspect;
+        public float scaling;
+
+    };
+
+    [Serializable]
+    public class Process
+    {
+        public string host;
+        public string ip;
+        public int x;
+        public int y;
+        public int i;
+        public int j;
+    };
+
+    [Serializable]
+    public class  Wall
+    {
+        public Master master;  
+        public Dimensions dimensions;
+        public Process[] processes;
+    };
+
     private bool initialized = false;
     
     public static TiledDisplayManager Instance { get; private set; }
@@ -110,21 +152,6 @@ public class TiledDisplayManager : ScriptableObject
 
     float wall_scaling = 1;
 
-    [Serializable]
-    public class dimensions
-    {
-        [XmlAttribute] public int numTilesWidth;
-        [XmlAttribute] public int numTilesHeight;
-        [XmlAttribute] public string screenWidth;
-        [XmlAttribute] public string screenHeight;
-        [XmlAttribute] public string mullionWidth;
-        [XmlAttribute] public string mullionHeight;
-        [XmlAttribute] public string fullscreen;
-        [XmlAttribute] public string aspect;
-
-        [XmlAttribute] public float wall_scaling;
-    }
-
     int numberOfTiles = 0;  
 
     public int NumberOfTiles()
@@ -135,36 +162,6 @@ public class TiledDisplayManager : ScriptableObject
     public float WallScaling()
     {
         return Instance.wall_scaling;
-    }
-
-    [Serializable]
-    public class process
-    {
-        [XmlAttribute] public string host;
-        [XmlAttribute] public string ip;
-        [XmlAttribute] public string display;
-        [XmlAttribute] public string port;
-        [XmlAttribute] public string x;
-        [XmlAttribute] public string y;
-        [XmlAttribute] public string i;
-        [XmlAttribute] public string j;
-    }
-
-    [Serializable]
-    public class master
-    {
-        [XmlAttribute] public string host;
-        [XmlAttribute] public string aspect;
-        [XmlAttribute] public string display;
-        [XmlAttribute] public string ip;
-    }
-
-    [XmlRoot("tile_configuration")]
-    public class tile_configuration
-    {
-        [XmlElement] public dimensions dimensions;
-        [XmlElement] public master master;
-        [XmlArray] public process[] processes;
     }
 
     public float GetWallScaling()
@@ -211,7 +208,7 @@ public class TiledDisplayManager : ScriptableObject
             if (home == null)
                 home = System.Environment.GetEnvironmentVariable("HOME");
             Debug.Log("HOME is " + home);
-            wallConfigFileName = Path.Combine(home, "wall.xml");
+            wallConfigFileName = Path.Combine(home, "wall.json");
         }
 
         if (! File.Exists(wallConfigFileName))
@@ -220,14 +217,14 @@ public class TiledDisplayManager : ScriptableObject
             return;
         }
 
-        tile_configuration container = null;
+        Wall container = new();
     
         try
         {
-            var serializer = new XmlSerializer(typeof(tile_configuration));
-            var stream = new FileStream(wallConfigFileName, FileMode.Open);
-            container = serializer.Deserialize(stream) as tile_configuration;
-            stream.Close();   
+            StreamReader sr = new(wallConfigFileName);
+            string json = sr.ReadToEnd();
+            container = JsonUtility.FromJson<Wall>(json);
+            sr.Close();
         }
         catch(Exception e)
         {
@@ -240,8 +237,7 @@ public class TiledDisplayManager : ScriptableObject
         var master = (container.master.ip == null) ? container.master.host : container.master.ip;
         hosts.Add(master);
 
-
-        foreach (process p in container.processes)
+        foreach (Process p in container.processes)
             hosts.Add((p.ip == null) ? p.host : p.ip);
 
         numProcesses = hosts.Count;
@@ -258,9 +254,7 @@ public class TiledDisplayManager : ScriptableObject
             Debug.Log("Acting as master");
             var aspect_string = container.master.aspect;
 
-            var parts = aspect_string.Split(':');
-            aspect = (float)(Convert.ToDouble(parts[0]) / Convert.ToDouble(parts[1]));
-
+            aspect = container.master.aspect;
             left = -aspect / 2;
             right = aspect / 2;
             bottom = -0.5F;
@@ -270,12 +264,10 @@ public class TiledDisplayManager : ScriptableObject
         {
             Debug.Log("Acting as worker");
             var aspect_string = container.dimensions.aspect;
-            var parts = aspect_string.Split(':');
-            aspect = (float)(Convert.ToDouble(parts[0]) / Convert.ToDouble(parts[1]));
+            aspect = container.dimensions.aspect;
+            wall_scaling = container.dimensions.scaling;
 
-            wall_scaling = container.dimensions.wall_scaling;
-
-            var nth = Convert.ToDouble(container.dimensions.numTilesHeight);
+            var nth = container.dimensions.numTilesHeight;
             if (nth == 0) nth = 1;
 
             var ntw = Convert.ToDouble(container.dimensions.numTilesWidth);
@@ -286,15 +278,15 @@ public class TiledDisplayManager : ScriptableObject
 
             int knt = 1;
             bool found = false;
-            foreach (process p in container.processes)
+            foreach (Process p in container.processes)
             {
                 string aa = p.host;
 
                 if (me == aa)
                 {
-                    left = (float)((Convert.ToDouble(p.i) - cw) * aspect);
+                    left = (float)((p.i - cw) * aspect);
                     right = left + aspect;
-                    bottom = (float)((ch - 1) - (Convert.ToDouble(p.j)) * 1.0F);
+                    bottom = (float)((ch - 1) - (p.j) * 1.0F);
                     top = bottom + 1;
                     myRank = knt;
                     found = true;
