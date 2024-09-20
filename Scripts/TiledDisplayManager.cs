@@ -5,6 +5,7 @@ using System.Data;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Xml.Serialization;
 using Unity.VisualScripting;
@@ -112,8 +113,8 @@ public class TiledDisplayManager : ScriptableObject
     [Serializable]
     public class dimensions
     {
-        [XmlAttribute] public string numTilesWidth;
-        [XmlAttribute] public string numTilesHeight;
+        [XmlAttribute] public int numTilesWidth;
+        [XmlAttribute] public int numTilesHeight;
         [XmlAttribute] public string screenWidth;
         [XmlAttribute] public string screenHeight;
         [XmlAttribute] public string mullionWidth;
@@ -274,8 +275,14 @@ public class TiledDisplayManager : ScriptableObject
 
             wall_scaling = container.dimensions.wall_scaling;
 
-            var ch = Convert.ToDouble(container.dimensions.numTilesHeight) / 2.0F;
-            var cw = Convert.ToDouble(container.dimensions.numTilesWidth) / 2.0F;
+            var nth = Convert.ToDouble(container.dimensions.numTilesHeight);
+            if (nth == 0) nth = 1;
+
+            var ntw = Convert.ToDouble(container.dimensions.numTilesWidth);
+            if (ntw ==  0) ntw = 1;
+
+            var ch = nth / 2.0F;
+            var cw = ntw / 2.0F;
 
             int knt = 1;
             bool found = false;
