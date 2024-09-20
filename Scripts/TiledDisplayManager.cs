@@ -30,27 +30,25 @@ public class MySocket
     {   
         Debug.LogFormat("Trying to connect to tile server on {0}", srvr);
 
-        IPHostEntry he = Dns.GetHostEntry(srvr);
-        if (he.AddressList.Length == 0)
+        IPHostEntry ipHE = Dns.GetHostEntry(srvr);
+        if (ipHE.AddressList.Length == 0)
         {
             Debug.LogFormat("Error getting IP address for {0}", srvr);
             Application.Quit();
         }
 
-        skt = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-
-
-        foreach (var addr in he.AddressList)
+        IPAddress ipAddress = ipHE.AddressList[0];
+        var ipEP = new IPEndPoint(ipAddress, 1902);
+        skt = new Socket(ipEP.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+        try
         {
-            var conn = new IPEndPoint(addr, 1902);
-            try
-            {
-                skt.Connect(conn);
-                break;
-            }
-            catch
-            {
-            }
+            skt.Connect(ipEP);
+        }
+        catch
+        {
+            Debug.LogFormat("unable to connnect to {0}", srvr);
+            skt = null;
+            Application.Quit();
         }
     }
 
@@ -61,6 +59,7 @@ public class MySocket
 
     public void Send(byte[] bytes)
     {
+
         int remaining = bytes.Length;
         int offset = 0, r;
         do
@@ -336,20 +335,31 @@ public class TiledDisplayManager : ScriptableObject
             szBytes = BitConverter.GetBytes((Int32)serialized_message.Length);
             foreach (MySocket skt in child_sockets)
             {
-                skt.Send(szBytes);
-                skt.Send(serialized_message);
+                if (skt != null && skt.IsConnected())
+                {
+                    skt.Send(szBytes);
+                    skt.Send(serialized_message);                    
+                }
+
             }
 
             foreach (MySocket skt in child_sockets)
-                skt.Receive(ref szBytes);
+                if (skt != null && skt.IsConnected())
+                    skt.Receive(ref szBytes);
+
+            Debug.Log("XXXX " + szBytes);
         }
         else
         {
-            up.Receive(ref szBytes);
-            sz = BitConverter.ToInt32(szBytes);
-            serialized_message = new byte[sz];
-            up.Receive(ref serialized_message);
-            up.Send(szBytes);
+            if (up != null && up.IsConnected())
+            {
+                up.Receive(ref szBytes);
+                sz = BitConverter.ToInt32(szBytes);
+                serialized_message = new byte[sz];
+                up.Receive(ref serialized_message);
+                up.Send(szBytes);     
+            }
+
         }
     }
     
