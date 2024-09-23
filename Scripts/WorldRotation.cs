@@ -31,7 +31,7 @@ public class WorldRotation : MonoBehaviour
 
     void Start()
     {
-        tdm = ScriptableObject.CreateInstance<TiledDisplayManager>();
+        tdm = TiledDisplayManager.Instance;
         mainCamera = Camera.main;
 
         string transformCache;

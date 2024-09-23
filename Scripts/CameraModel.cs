@@ -59,7 +59,7 @@ public class CameraModel : MonoBehaviour
 
     public virtual void Start()
     {
-        tdm = ScriptableObject.CreateInstance<TiledDisplayManager>();
+        tdm = TiledDisplayManager.Instance;
         if (! tdm.IsMaster())
         {   
             float l, r, t, b;

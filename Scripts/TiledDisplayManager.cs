@@ -1,18 +1,11 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.CompilerServices;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Xml.Serialization;
-using Unity.VisualScripting;
-using UnityEditor;
 using UnityEngine;
-using UnityEngine.InputSystem.Utilities;
-using UnityEngine.Rendering;
+using IVLab.ABREngine;
+
 
 public class MySocket 
 {
@@ -92,7 +85,7 @@ public class MySocket
     }
 }
 
-public class TiledDisplayManager : ScriptableObject
+public class TiledDisplayManager : MonoBehaviour
 {
     [Serializable]
     public class Master
@@ -363,6 +356,23 @@ public class TiledDisplayManager : ScriptableObject
             serialized_message = new byte[sz];
             up.Receive(ref serialized_message);
             up.Send(szBytes);
+        }
+    }
+
+    void Update()
+    {
+        if (Instance.IsMaster() && Instance.NumberOfTiles() > 0)
+        {
+            float time = ABREngine.Instance.GetCurrentTime();
+            byte[] bytes = BitConverter.GetBytes(time);
+            Instance.Communicate(ref bytes);
+        }
+        else
+        {
+            byte[] bytes = null;
+            Instance.Communicate(ref bytes);
+            float time = BitConverter.ToSingle(bytes);
+            ABREngine.Instance.SetCurrentTime(time);
         }
     }
     
