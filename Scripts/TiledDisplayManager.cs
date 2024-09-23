@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Xml.Serialization;
 using Unity.VisualScripting;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem.Utilities;
 using UnityEngine.Rendering;
@@ -263,6 +264,12 @@ public class TiledDisplayManager : ScriptableObject
         else
         {
             Debug.Log("Acting as worker");
+        
+            // Turn off GUI elements
+            GameObject gui = GameObject.Find("GUI");
+            if (gui != null)
+                gui.SetActive(false);
+
             var aspect_string = container.dimensions.aspect;
             aspect = container.dimensions.aspect;
             wall_scaling = container.dimensions.scaling;
