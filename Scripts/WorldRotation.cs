@@ -1,12 +1,9 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.IO;
-using TMPro;
 using UnityEngine;
-using UnityEngine.InputSystem.LowLevel;
 using System.Runtime.Serialization.Formatters.Binary;
-using UnityEngine.Accessibility;
+using UnityEngine.EventSystems;
+
 
 
 public class WorldRotation : MonoBehaviour
@@ -87,6 +84,9 @@ public class WorldRotation : MonoBehaviour
     }
     void Update()
     {
+        if (EventSystem.current.IsPointerOverGameObject())
+            return;
+
 		if (tdm.IsMaster())
 		{   
 			if (Input.GetMouseButtonDown(button))

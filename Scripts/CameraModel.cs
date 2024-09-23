@@ -1,13 +1,10 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
+
 using System.IO;
 using UnityEngine;
-using UnityEngine.InputSystem.LowLevel;
+using UnityEngine.EventSystems;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.Diagnostics.Tracing;
-using UnityEngine.UIElements;
-using UnityEngine.AI;
+
 
 public class CameraModel : MonoBehaviour
 {
@@ -151,6 +148,9 @@ public class CameraModel : MonoBehaviour
 
     void Update()
     {
+        if (EventSystem.current.IsPointerOverGameObject())
+            return;
+
         if (tdm.IsMaster())
         {        
             CameraController();
