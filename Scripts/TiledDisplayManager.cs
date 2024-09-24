@@ -366,12 +366,14 @@ public class TiledDisplayManager : MonoBehaviour
             float time = ABREngine.Instance.GetCurrentTime();
             byte[] bytes = BitConverter.GetBytes(time);
             Instance.Communicate(ref bytes);
+            Debug.Log("sending " + time);
         }
         else
         {
             byte[] bytes = null;
             Instance.Communicate(ref bytes);
             float time = BitConverter.ToSingle(bytes);
+            Debug.Log("receiving time " + time);
             ABREngine.Instance.SetCurrentTime(time);
         }
     }
