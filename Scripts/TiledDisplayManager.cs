@@ -5,88 +5,156 @@ using System.Net;
 using System.Net.Sockets;
 using UnityEngine;
 using IVLab.ABREngine;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Net.Http;
+using IVLab.Utilities;
 
+// The communication pattern is that the Server processes messages from above and the MessageRecipients represent 
+// connections downward.   So the master has no Server and multiple recipients, while the clients have Servers
+// but no recipients.
 
-public class MySocket 
+public class MessageRecipient
 {
-    Socket skt = null;
+    NetworkStream _stream;
 
-    public MySocket()
+    public MessageRecipient(string host, int port)
     {
-        Socket srvr = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        srvr.Bind(new IPEndPoint(IPAddress.Any, 1902));
-        srvr.Listen(1);
-        Debug.Log("Listening...............");
-        skt = srvr.Accept();
-        Debug.Log("Accepted!");
+        TcpClient client = new(host, port);
+        _stream = client.GetStream();
+    }
+    public void SendInt(int n)
+    {
+        byte[] bytes = System.BitConverter.GetBytes(n);
+        _stream.Write(bytes, 0, bytes.Length);
     }
 
-    public MySocket(string srvr)
-    {   
-        Debug.LogFormat("Trying to connect to tile server on {0}", srvr);
-
-        IPHostEntry ipHE = Dns.GetHostEntry(srvr);
-        if (ipHE.AddressList.Length == 0)
-        {
-            Debug.LogFormat("Error getting IP address for {0}", srvr);
-            Application.Quit();
-        }
-
-        IPAddress ipAddress = ipHE.AddressList[0];
-        var ipEP = new IPEndPoint(ipAddress, 1902);
-        skt = new Socket(ipEP.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-        try
-        {
-            skt.Connect(ipEP);
-        }
-        catch
-        {
-            Debug.LogFormat("unable to connnect to {0}", srvr);
-            skt = null;
-            Application.Quit();
-        }
+    public void SendBytes(byte[] bytes)
+    {
+        SendInt(bytes.Length);
+        _stream.Write(bytes, 0, bytes.Length);
     }
 
-    public bool IsConnected()
+    public void SendString(string str)
     {
-        return skt.Connected;   
-    }
-
-    public void Send(byte[] bytes)
-    {
-
-        int remaining = bytes.Length;
-        int offset = 0, r;
-        do
-        {
-            r = skt.Send(bytes, offset, remaining, SocketFlags.None);
-            remaining -= r; 
-            offset += r;    
-        } while (remaining > 0 && r != 0); 
-
-        if (r == 0)
-            Application.Quit();       
-    }
-
-    public void Receive(ref byte[] bytes)
-    {
-
-        int remaining = bytes.Length;
-        int offset = 0, r;
-        do
-        {
-            r = skt.Receive(bytes, offset, remaining, SocketFlags.None);
-            remaining -= r;
-            offset += r;
-        } while (remaining > 0 && r != 0); 
-
-        if (r == 0)
-            Application.Quit();
+        byte[] bytes = Encoding.UTF8.GetBytes(str);
+        SendBytes(bytes);
     }
 }
 
+
+
 public class TiledDisplayManager : MonoBehaviour
 {
+    public class MessageManager
+{
+    private int _port;
+    private List<MessageRecipient> _recipients;
+    private Dictionary<string, byte[]> _messages;
+    public class MessageRecipient
+    {
+        NetworkStream _stream;
+
+        public MessageRecipient(string host, int port)
+        {
+            TcpClient client = new(host, port);
+            _stream = client.GetStream();
+        }
+        public void SendInt(int n)
+        {
+            byte[] bytes = System.BitConverter.GetBytes(n);
+            _stream.Write(bytes, 0, bytes.Length);
+        }
+
+        public void SendBytes(byte[] bytes)
+        {
+            SendInt(bytes.Length);
+            _stream.Write(bytes, 0, bytes.Length);
+        }
+
+        public void SendString(string str)
+        {
+            byte[] bytes = Encoding.UTF8.GetBytes(str);
+            SendBytes(bytes);
+        }
+    }
+    public MessageManager(int p)
+    {
+        _port = p;
+    }
+    public void AddRecipient(string host)
+    { 
+        _recipients.Add(new MessageRecipient(host, _port));
+    }
+
+    public byte[] GetMessage(string tag)
+    {
+        byte[] msg = null;
+
+        lock(_messages)
+        {
+            if (_messages.ContainsKey(tag))
+            {
+                msg = _messages[tag];
+                _messages.Remove(tag);
+            }
+        }
+
+        return msg;
+    }
+
+    public void SendMessage(string tag, byte[] msg)
+    {
+        foreach (var recipient in _recipients)
+        {
+            recipient.SendString(tag);
+            recipient.SendBytes(msg);
+        }
+    }
+
+    private byte[] _ReadBytes(TcpClient sender)
+    {
+        byte[] lbuf = new byte[4];
+        for (int m, k = 0; k < 4; k += m)
+            m = sender.GetStream().Read(lbuf, k, 4-k);
+            
+        int len = BitConverter.ToInt32(lbuf, 0);
+
+        byte[] bytes = new byte[len];
+        for (int m, k = 0; k < len; k += m)
+            m = sender.GetStream().Read(bytes, k, len-k);
+        
+        return bytes;
+    }
+
+    private void Handler(TcpClient client)
+    {
+        while (true)
+        {
+            byte[] tagBytes = _ReadBytes(client);
+            string tag = System.Text.Encoding.UTF8.GetString(tagBytes);  
+
+            if (tag == "quit")
+                Environment.Exit(0);
+            
+            byte[] msg = _ReadBytes(client);
+
+            lock(_messages)
+            {
+                _messages[tag] = msg;
+            }
+        }
+    }
+
+    public void StartServer()
+    {
+        TcpListener listener = new(IPAddress.Any, _port);    
+        listener.Start();
+        TcpClient client = listener.AcceptTcpClient();
+        Task.Run(() => Handler(client));
+    }
+}
     [Serializable]
     public class Master
     {
@@ -130,15 +198,9 @@ public class TiledDisplayManager : MonoBehaviour
     };
 
     private bool initialized = false;
-    
     public static TiledDisplayManager Instance { get; private set; }
-
-    public string configFile = "./configuration.xml";
     public bool isMaster = true;
-
-    MySocket up = null;
-
-    List<MySocket> child_sockets = new List<MySocket>();
+    public MessageManager messageManager = null;
 
     int numProcesses = -1;
     int myRank = 0;
@@ -226,7 +288,6 @@ public class TiledDisplayManager : MonoBehaviour
             Application.Quit();
         }
 
-
         List<string> hosts = new List<string>();
         var master = (container.master.ip == null) ? container.master.host : container.master.ip;
         hosts.Add(master);
@@ -303,78 +364,39 @@ public class TiledDisplayManager : MonoBehaviour
             }
         }
 
+        messageManager = new MessageManager(1901);
+
         if (myRank > 0 && (numProcesses > 1))
         {
             Debug.Log("opening UP socket and waiting...");
-            up = new MySocket();
+            messageManager.StartServer();
             Debug.Log("UP connected");
         }
         else
         {
             for (int i = 1; i < numProcesses; i++)
             {
-                MySocket skt = new MySocket(hosts[i]);
-                child_sockets.Add(skt);
+                messageManager.AddRecipient(hosts[i]);
+                Debug.Log("connected to " + hosts[i]);
             }
         }
     }
-
-    public void Communicate(ref byte[] serialized_message)
-    {
-        Instance._Communicate(ref serialized_message);
-    }
-
-    private void _Communicate(ref byte[] serialized_message)
-    {
-        byte[] szBytes = new byte[4];
-        int sz = 0;
-
-        if (isMaster)
-        {
-            szBytes = BitConverter.GetBytes((Int32)serialized_message.Length);
-            foreach (MySocket skt in child_sockets)
-            {
-                if (skt != null && skt.IsConnected())
-                {
-                    skt.Send(szBytes);
-                    skt.Send(serialized_message);                    
-                }
-
-            }
-
-            foreach (MySocket skt in child_sockets)
-                if (skt != null && skt.IsConnected())
-                    skt.Receive(ref szBytes);
-        }
-        else
-        {
-            if (up == null || !up.IsConnected())
-                throw(new Exception("parent has disappeared"));
-    
-            up.Receive(ref szBytes);
-            sz = BitConverter.ToInt32(szBytes);
-            serialized_message = new byte[sz];
-            up.Receive(ref serialized_message);
-            up.Send(szBytes);
-        }
-    }
-
     void Update()
     {
         if (Instance.IsMaster() && Instance.NumberOfTiles() > 0)
         {
             float time = ABREngine.Instance.GetCurrentTime();
             byte[] bytes = BitConverter.GetBytes(time);
-            Instance.Communicate(ref bytes);
-            Debug.Log("sending " + time);
+            messageManager.SendMessage("CurrentTime", bytes);
         }
         else
         {
-            byte[] bytes = null;
-            Instance.Communicate(ref bytes);
-            float time = BitConverter.ToSingle(bytes);
-            Debug.Log("receiving time " + time);
-            ABREngine.Instance.SetCurrentTime(time);
+            byte[] bytes = messageManager.GetMessage("CurrentTime");
+            if (bytes != null)
+            {
+                float time = BitConverter.ToSingle(bytes);
+                ABREngine.Instance.SetCurrentTime(time);
+            }
         }
     }
     

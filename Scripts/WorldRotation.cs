@@ -140,33 +140,27 @@ public class WorldRotation : MonoBehaviour
                 wx.rz = r.z;
                 wx.rw = r.w;
 
-                //Debug.Log("World sent " + wx.px + " " + wx.py + " " + wx.pz + " " + wx.rx + " " + wx.ry + " " + wx.rz + " " + wx.rw);
-
                 fmt.Serialize(ms, wx);
                 byte[] message = ms.ToArray();
 
-                //Debug.Log("Sending Message " + message.Length + " " + message.ToString());
-
-                tdm.Communicate(ref message);
+                tdm.messageManager.SendMessage("WorldRotation", message);
 
             }	
 		} 
 		else
 		{
-            WorldTransform wx;
-            var ms = new MemoryStream();
-            var fmt = new BinaryFormatter();
-            
-			byte[] message = null;
-			tdm.Communicate(ref message);
+            byte[] worldRotationMessaage = tdm.messageManager.GetMessage("WorldRotation");
+            if (worldRotationMessaage != null)
+            {
+                var fmt = new BinaryFormatter();
+                var ms = new MemoryStream(worldRotationMessaage);
+                WorldTransform wx = (WorldTransform)fmt.Deserialize(ms);
 
-            ms = new MemoryStream(message);
-            wx = (WorldTransform)fmt.Deserialize(ms);
+                Vector3 p = new Vector3(wx.px, wx.py, wx.pz);
+                Quaternion r = new Quaternion(wx.rx, wx.ry, wx.rz, wx.rw);
 
-            Vector3 p = new Vector3(wx.px, wx.py, wx.pz);
-            Quaternion r = new Quaternion(wx.rx, wx.ry, wx.rz, wx.rw);
-
-            transform.SetPositionAndRotation(p, r);
+                transform.SetPositionAndRotation(p, r);
+            }
 		}
 	}
 }

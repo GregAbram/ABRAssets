@@ -182,28 +182,23 @@ public class CameraModel : MonoBehaviour
                 fmt.Serialize(ms, cv);
                 byte[] message = ms.ToArray();
 
-                tdm.Communicate(ref message);
+                tdm.messageManager.SendMessage("CameraModel", message);
             }
         }
         else
         {
-            CurrentView cv;
-            var ms = new MemoryStream();
-            var fmt = new BinaryFormatter();
+            byte[] currentViewMessage = tdm.messageManager.GetMessage("CameraModel");
+            if (currentViewMessage != null)
+            {
+                var ms = new MemoryStream(currentViewMessage);
+                var fmt = new BinaryFormatter();
+                CurrentView cv = (CurrentView)fmt.Deserialize(ms);
 
-            byte[] message = null;
-            tdm.Communicate(ref message);
+                Vector3 p = new Vector3(cv.px, cv.py, cv.pz);
+                Quaternion r = new Quaternion(cv.rx, cv.ry, cv.rz, cv.rw);
 
-            ms = new MemoryStream(message);
-            cv = (CurrentView)fmt.Deserialize(ms);
-
-            //Debug.Log("Camera received " + cv.px + " " + cv.py + " " + cv.pz + " " + cv.rx + " " + cv.ry + " " + cv.rz + " " + cv.rw);
-
-
-            Vector3 p = new Vector3(cv.px, cv.py, cv.pz);
-            Quaternion r = new Quaternion(cv.rx, cv.ry, cv.rz, cv.rw);
-
-            transform.SetPositionAndRotation(p, r);
+                transform.SetPositionAndRotation(p, r);
+            }
         }
     }
 
