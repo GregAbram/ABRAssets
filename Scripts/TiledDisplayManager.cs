@@ -50,7 +50,7 @@ public class TiledDisplayManager : MonoBehaviour
     public class MessageManager
 {
     private int _port;
-    private List<MessageRecipient> _recipients;
+    private List<MessageRecipient> _recipients = new List<MessageRecipient>();
     private Dictionary<string, byte[]> _messages;
     public class MessageRecipient
     {
@@ -383,7 +383,7 @@ public class TiledDisplayManager : MonoBehaviour
     }
     void Update()
     {
-        if (Instance.IsMaster() && Instance.NumberOfTiles() > 0)
+        if (Instance.IsMaster())
         {
             float time = ABREngine.Instance.GetCurrentTime();
             byte[] bytes = BitConverter.GetBytes(time);
