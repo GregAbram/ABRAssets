@@ -51,7 +51,7 @@ public class TiledDisplayManager : MonoBehaviour
 {
     private int _port;
     private List<MessageRecipient> _recipients = new List<MessageRecipient>();
-    private Dictionary<string, byte[]> _messages;
+    private Dictionary<string, byte[]> _messages = new Dictionary<string, byte[]>();
     public class MessageRecipient
     {
         NetworkStream _stream;
