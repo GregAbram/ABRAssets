@@ -10,8 +10,10 @@ using System.Security.Cryptography;
 
 public class LookMove : CameraModel
 {
-    public override void CameraController()
+    public override bool CameraController()
     {	
+		bool changed = false;
+
 		if(Input.GetKeyDown("r"))
 		{
 			transform.position = Vector3.zero;
@@ -40,12 +42,15 @@ public class LookMove : CameraModel
 
             float inputX = deltaPosition.x * mouseRotationSensitivity;
             float inputY = deltaPosition.y * mouseRotationSensitivity;
+			if (inputX != 0 || inputY != 0)
+			{
+				Quaternion q_r, q_u;
+            	q_r = Quaternion.AngleAxis(inputY, Camera.main.transform.right);
+            	q_u = Quaternion.AngleAxis(-inputX, Camera.main.transform.up);
+            	transform.rotation = q_r * q_u * transform.rotation;
+				changed = true;
+			}
 
-            Quaternion q_r, q_u;
-            q_r = Quaternion.AngleAxis(inputY, Camera.main.transform.right);
-            q_u = Quaternion.AngleAxis(-inputX, Camera.main.transform.up);
-
-            transform.rotation = q_r * q_u * transform.rotation;
 		}
 
 		float inputSW = Input.GetAxis("Mouse ScrollWheel") * mouseMovementSensitivity;
@@ -57,7 +62,11 @@ public class LookMove : CameraModel
 				transform.position += inputSW * transform.forward;
 		
 			moved = true;
+			changed = true;
+
 		}	
+
+		return changed;
      }
 }
 

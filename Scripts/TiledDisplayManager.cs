@@ -17,13 +17,15 @@ using IVLab.Utilities;
 
 public class MessageRecipient
 {
+    TcpClient _client;
     NetworkStream _stream;
 
     public MessageRecipient(string host, int port)
     {
-        TcpClient client = new(host, port);
-        _stream = client.GetStream();
-    }
+        _client = new(host, port);
+        _stream = _client.GetStream();
+    }   
+
     public void SendInt(int n)
     {
         byte[] bytes = System.BitConverter.GetBytes(n);
@@ -42,119 +44,118 @@ public class MessageRecipient
         SendBytes(bytes);
     }
 }
-
-
-
 public class TiledDisplayManager : MonoBehaviour
 {
     public class MessageManager
-{
-    private int _port;
-    private List<MessageRecipient> _recipients = new List<MessageRecipient>();
-    private Dictionary<string, byte[]> _messages = new Dictionary<string, byte[]>();
-    public class MessageRecipient
     {
-        NetworkStream _stream;
-
-        public MessageRecipient(string host, int port)
+        private int _port;
+        private List<MessageRecipient> _recipients = new List<MessageRecipient>();
+        private Dictionary<string, byte[]> _messages = new Dictionary<string, byte[]>();
+        public class MessageRecipient
         {
-            TcpClient client = new(host, port);
-            _stream = client.GetStream();
-        }
-        public void SendInt(int n)
-        {
-            byte[] bytes = System.BitConverter.GetBytes(n);
-            _stream.Write(bytes, 0, bytes.Length);
-        }
+            NetworkStream _stream;
 
-        public void SendBytes(byte[] bytes)
-        {
-            SendInt(bytes.Length);
-            _stream.Write(bytes, 0, bytes.Length);
-        }
-
-        public void SendString(string str)
-        {
-            byte[] bytes = Encoding.UTF8.GetBytes(str);
-            SendBytes(bytes);
-        }
-    }
-    public MessageManager(int p)
-    {
-        _port = p;
-    }
-    public void AddRecipient(string host)
-    { 
-        _recipients.Add(new MessageRecipient(host, _port));
-    }
-
-    public byte[] GetMessage(string tag)
-    {
-        byte[] msg = null;
-
-        lock(_messages)
-        {
-            if (_messages.ContainsKey(tag))
+            public MessageRecipient(string host, int port)
             {
-                msg = _messages[tag];
-                _messages.Remove(tag);
+                TcpClient client = new(host, port);
+                _stream = client.GetStream();
+            }
+            public void SendInt(int n)
+            {
+                byte[] bytes = System.BitConverter.GetBytes(n);
+                _stream.Write(bytes, 0, bytes.Length);
+            }
+
+            public void SendBytes(byte[] bytes)
+            {
+                SendInt(bytes.Length);
+                _stream.Write(bytes, 0, bytes.Length);
+            }
+
+            public void SendString(string str)
+            {
+                byte[] bytes = Encoding.UTF8.GetBytes(str);
+                SendBytes(bytes);
             }
         }
-
-        return msg;
-    }
-
-    public void SendMessage(string tag, byte[] msg)
-    {
-        foreach (var recipient in _recipients)
+        public MessageManager(int p)
         {
-            recipient.SendString(tag);
-            recipient.SendBytes(msg);
+            _port = p;
         }
-    }
+        public void AddRecipient(string host)
+        { 
+            _recipients.Add(new MessageRecipient(host, _port));
+        }
 
-    private byte[] _ReadBytes(TcpClient sender)
-    {
-        byte[] lbuf = new byte[4];
-        for (int m, k = 0; k < 4; k += m)
-            m = sender.GetStream().Read(lbuf, k, 4-k);
-            
-        int len = BitConverter.ToInt32(lbuf, 0);
-
-        byte[] bytes = new byte[len];
-        for (int m, k = 0; k < len; k += m)
-            m = sender.GetStream().Read(bytes, k, len-k);
-        
-        return bytes;
-    }
-
-    private void Handler(TcpClient client)
-    {
-        while (true)
+        public byte[] GetMessage(string tag)
         {
-            byte[] tagBytes = _ReadBytes(client);
-            string tag = System.Text.Encoding.UTF8.GetString(tagBytes);  
-
-            if (tag == "quit")
-                Environment.Exit(0);
-            
-            byte[] msg = _ReadBytes(client);
+            byte[] msg = null;
 
             lock(_messages)
             {
-                _messages[tag] = msg;
+                if (_messages.ContainsKey(tag))
+                {
+                    msg = _messages[tag];
+                    _messages.Remove(tag);
+                }
+            }
+
+            return msg;
+        }
+        public void SendMessage(string tag, byte[] msg)
+        {
+            foreach (var recipient in _recipients)
+            {
+                lock(recipient)
+                {
+                    recipient.SendString(tag);
+                    recipient.SendBytes(msg);
+                }
             }
         }
-    }
 
-    public void StartServer()
-    {
-        TcpListener listener = new(IPAddress.Any, _port);    
-        listener.Start();
-        TcpClient client = listener.AcceptTcpClient();
-        Task.Run(() => Handler(client));
+        private byte[] _ReadBytes(TcpClient sender)
+        {
+            byte[] lbuf = new byte[4];
+            for (int m, k = 0; k < 4; k += m)
+                m = sender.GetStream().Read(lbuf, k, 4-k);
+                
+            int len = BitConverter.ToInt32(lbuf, 0);
+
+            byte[] bytes = new byte[len];
+            for (int m, k = 0; k < len; k += m)
+                m = sender.GetStream().Read(bytes, k, len-k);
+            
+            return bytes;
+        }
+
+        private void Handler(TcpClient client)
+        {
+            while (true)
+            {
+                byte[] tagBytes = _ReadBytes(client);
+                string tag = System.Text.Encoding.UTF8.GetString(tagBytes);  
+
+                if (tag == "quit")
+                    Environment.Exit(0);
+                
+                byte[] msg = _ReadBytes(client);
+
+                lock(_messages)
+                {
+                    _messages[tag] = msg;
+                }
+            }
+        }
+
+        public void StartServer()
+        {
+            TcpListener listener = new(IPAddress.Any, _port);    
+            listener.Start();
+            TcpClient client = listener.AcceptTcpClient();
+            Task.Run(() => Handler(client));
+        }
     }
-}
     [Serializable]
     public class Master
     {

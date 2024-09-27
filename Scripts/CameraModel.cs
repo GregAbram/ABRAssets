@@ -4,6 +4,8 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using System.Runtime.Serialization.Formatters.Binary;
+using UnityEngine.Tilemaps;
+using Unity.VisualScripting;
 
 
 public class CameraModel : MonoBehaviour
@@ -105,8 +107,10 @@ public class CameraModel : MonoBehaviour
         }
     }
 
-    public virtual void CameraController()
+    public virtual bool CameraController()
     {
+        bool changed = false;
+
         if (Input.GetMouseButtonDown(button))
         {
             lastPosition = Input.mousePosition;
@@ -124,12 +128,16 @@ public class CameraModel : MonoBehaviour
             float inputX = deltaPosition.x * mouseRotationSensitivity;
             float inputY = deltaPosition.y * mouseRotationSensitivity;
 
-            Quaternion q_r, q_u;
+            if (inputX != 0 || inputY != 0)
+            {
+                Quaternion q_r, q_u;
 
-            q_r = Quaternion.AngleAxis(inputY, Camera.main.transform.right);
-            q_u = Quaternion.AngleAxis(-inputX, Camera.main.transform.up);
+                q_r = Quaternion.AngleAxis(inputY, Camera.main.transform.right);
+                q_u = Quaternion.AngleAxis(-inputX, Camera.main.transform.up);
 
-            transform.rotation = q_r * q_u * transform.rotation;
+                 transform.rotation = q_r * q_u * transform.rotation;      
+                 changed = true;          
+            }
         }
             
         float inputSW = Input.GetAxis("Mouse ScrollWheel") * mouseMovementSensitivity;
@@ -137,6 +145,7 @@ public class CameraModel : MonoBehaviour
         {
             transform.position += inputSW * transform.forward;
             moved = true;
+            changed = true;
         }
 
         if (Input.GetMouseButtonUp(button))
@@ -144,6 +153,8 @@ public class CameraModel : MonoBehaviour
             mouseIsDown = false;
             saveState = moved;
         }
+
+        return changed;
     }
 
     void Update()
@@ -153,36 +164,39 @@ public class CameraModel : MonoBehaviour
 
         if (tdm.IsMaster())
         {        
-            CameraController();
-
-            if (saveState)
+            bool changed = CameraController();
+            if (changed)
             {
-                SaveState();
-                saveState = false;
-            }
+                if (saveState)
+                {
+                    SaveState();
+                    saveState = false;
+                }
 
-            if (tdm.NumberOfTiles() > 0)
-            {
-                CurrentView cv = new CurrentView();
-                var fmt = new BinaryFormatter();
-                var ms = new MemoryStream();
-            
-                Vector3 p;
-                Quaternion r;
-                transform.GetPositionAndRotation(out p, out r);
+                if (tdm.NumberOfTiles() > 0)
+                {
+                    CurrentView cv = new CurrentView();
+                    var fmt = new BinaryFormatter();
+                    var ms = new MemoryStream();
+                
+                    Vector3 p;
+                    Quaternion r;
+                    transform.GetPositionAndRotation(out p, out r);
 
-                cv.px = p.x;
-                cv.py = p.y;
-                cv.pz = p.z;
-                cv.rx = r.x;
-                cv.ry = r.y;
-                cv.rz = r.z;
-                cv.rw = r.w;
+                    cv.px = p.x;
+                    cv.py = p.y;
+                    cv.pz = p.z;
+                    cv.rx = r.x;
+                    cv.ry = r.y;
+                    cv.rz = r.z;
+                    cv.rw = r.w;
 
-                fmt.Serialize(ms, cv);
-                byte[] message = ms.ToArray();
+                    fmt.Serialize(ms, cv);
+                    byte[] message = ms.ToArray();
 
-                tdm.messageManager.SendMessage("CameraModel", message);
+                    tdm.messageManager.SendMessage("CameraModel", message);
+                    Debug.LogFormat("CAM {0} {1} {2} {4} {5} {6} {7}", p.x, p.y, p.z, r.x, r.y, r.z, r.w);
+                }
             }
         }
         else
@@ -196,6 +210,8 @@ public class CameraModel : MonoBehaviour
 
                 Vector3 p = new Vector3(cv.px, cv.py, cv.pz);
                 Quaternion r = new Quaternion(cv.rx, cv.ry, cv.rz, cv.rw);
+
+                Debug.LogFormat("CAM {0} {1} {2} {4} {5} {6} {7}", p.x, p.y, p.z, r.x, r.y, r.z, r.w);
 
                 transform.SetPositionAndRotation(p, r);
             }
@@ -231,7 +247,5 @@ public class CameraModel : MonoBehaviour
         m[3, 3] = 0;
         return m;
     }
-
-
 }
 
