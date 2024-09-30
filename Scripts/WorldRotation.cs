@@ -8,7 +8,7 @@ using UnityEngine.EventSystems;
 
 public class WorldRotation : MonoBehaviour
 {
-    string message_tag = "world rotation";
+    public string message_tag = "world rotation";
     public int button = 1;
     public float worldRotationSensitivity = 2f;
     Vector3 lastPosition;
