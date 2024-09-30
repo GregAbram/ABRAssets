@@ -8,7 +8,7 @@ using UnityEngine.EventSystems;
 
 public class WorldRotation : MonoBehaviour
 {
-    string tag = "world rotation";
+    string message_tag = "world rotation";
     public int button = 1;
     public float worldRotationSensitivity = 2f;
     Vector3 lastPosition;
@@ -150,12 +150,12 @@ public class WorldRotation : MonoBehaviour
 
                 fmt.Serialize(ms, wx);
                 byte[] message = ms.ToArray();
-                tdm.messageManager.SendMessage(tag, message);
+                tdm.messageManager.SendMessage(message_tag, message);
             }	
 		} 
 		else
 		{
-            byte[] worldRotationMessaage = tdm.messageManager.GetMessage(tag);
+            byte[] worldRotationMessaage = tdm.messageManager.GetMessage(message_tag);
             if (worldRotationMessaage != null)
             {
                 var fmt = new BinaryFormatter();

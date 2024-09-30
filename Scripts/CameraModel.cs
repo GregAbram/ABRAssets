@@ -10,7 +10,7 @@ using Unity.VisualScripting;
 
 public class CameraModel : MonoBehaviour
 {
-    public string tag = "camera model";
+    public string message_tag = "camera model";
     public int button = 0;
     public float mouseRotationSensitivity = .1f;
     public float mouseMovementSensitivity = 2f;
@@ -195,14 +195,14 @@ public class CameraModel : MonoBehaviour
                     fmt.Serialize(ms, cv);
                     byte[] message = ms.ToArray();
 
-                    tdm.messageManager.SendMessage(tag, message);
+                    tdm.messageManager.SendMessage(message_tag, message);
                     Debug.LogFormat("CAM {0} {1} {2} {4} {5} {6} {7}", p.x, p.y, p.z, r.x, r.y, r.z, r.w);
                 }
             }
         }
         else
         {
-            byte[] currentViewMessage = tdm.messageManager.GetMessage(tag);
+            byte[] currentViewMessage = tdm.messageManager.GetMessage(message_tag);
             if (currentViewMessage != null)
             {
                 var ms = new MemoryStream(currentViewMessage);
