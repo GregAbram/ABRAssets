@@ -8,6 +8,7 @@ using UnityEngine.EventSystems;
 
 public class WorldRotation : MonoBehaviour
 {
+    string tag = "world rotation";
     public int button = 1;
     public float worldRotationSensitivity = 2f;
     Vector3 lastPosition;
@@ -87,6 +88,8 @@ public class WorldRotation : MonoBehaviour
         if (EventSystem.current.IsPointerOverGameObject())
             return;
 
+            bool changed = false;
+
 		if (tdm.IsMaster())
 		{   
 			if (Input.GetMouseButtonDown(button))
@@ -102,16 +105,21 @@ public class WorldRotation : MonoBehaviour
 				float inputX = deltaPosition.x * worldRotationSensitivity;
 				float inputY = deltaPosition.y * worldRotationSensitivity;
 
-                Quaternion q_r, q_u;
+                if (inputX != 0 || inputY != 0)
+                {
+                    changed = true;
+                    
+                    Quaternion q_r, q_u;
 
-                if(Input.GetKey("space"))
-                    q_r = Quaternion.AngleAxis(inputY, mainCamera.transform.forward);
-                else
-                    q_r = Quaternion.AngleAxis(inputY, mainCamera.transform.right);
+                    if(Input.GetKey("space"))
+                        q_r = Quaternion.AngleAxis(inputY, mainCamera.transform.forward);
+                    else
+                        q_r = Quaternion.AngleAxis(inputY, mainCamera.transform.right);
 
-                q_u = Quaternion.AngleAxis(-inputX, mainCamera.transform.up);
+                    q_u = Quaternion.AngleAxis(-inputX, mainCamera.transform.up);
 
-                transform.rotation = q_r * q_u * transform.rotation;
+                    transform.rotation = q_r * q_u * transform.rotation;
+                }
 
 				lastPosition = currentPosition;
 			}
@@ -122,7 +130,7 @@ public class WorldRotation : MonoBehaviour
 				saveState();
 			}
 
-			if (tdm.NumberOfTiles() > 0)
+			if (changed && tdm.NumberOfTiles() > 0)
             {
                 WorldTransform wx = new WorldTransform();
                 var fmt = new BinaryFormatter();
@@ -142,14 +150,12 @@ public class WorldRotation : MonoBehaviour
 
                 fmt.Serialize(ms, wx);
                 byte[] message = ms.ToArray();
-
-                tdm.messageManager.SendMessage("WorldRotation", message);
-
+                tdm.messageManager.SendMessage(tag, message);
             }	
 		} 
 		else
 		{
-            byte[] worldRotationMessaage = tdm.messageManager.GetMessage("WorldRotation");
+            byte[] worldRotationMessaage = tdm.messageManager.GetMessage(tag);
             if (worldRotationMessaage != null)
             {
                 var fmt = new BinaryFormatter();

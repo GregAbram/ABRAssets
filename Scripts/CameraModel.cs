@@ -10,6 +10,7 @@ using Unity.VisualScripting;
 
 public class CameraModel : MonoBehaviour
 {
+    public string tag = "camera model";
     public int button = 0;
     public float mouseRotationSensitivity = .1f;
     public float mouseMovementSensitivity = 2f;
@@ -194,14 +195,14 @@ public class CameraModel : MonoBehaviour
                     fmt.Serialize(ms, cv);
                     byte[] message = ms.ToArray();
 
-                    tdm.messageManager.SendMessage("CameraModel", message);
+                    tdm.messageManager.SendMessage(tag, message);
                     Debug.LogFormat("CAM {0} {1} {2} {4} {5} {6} {7}", p.x, p.y, p.z, r.x, r.y, r.z, r.w);
                 }
             }
         }
         else
         {
-            byte[] currentViewMessage = tdm.messageManager.GetMessage("CameraModel");
+            byte[] currentViewMessage = tdm.messageManager.GetMessage(tag);
             if (currentViewMessage != null)
             {
                 var ms = new MemoryStream(currentViewMessage);
@@ -210,8 +211,6 @@ public class CameraModel : MonoBehaviour
 
                 Vector3 p = new Vector3(cv.px, cv.py, cv.pz);
                 Quaternion r = new Quaternion(cv.rx, cv.ry, cv.rz, cv.rw);
-
-                Debug.LogFormat("CAM {0} {1} {2} {4} {5} {6} {7}", p.x, p.y, p.z, r.x, r.y, r.z, r.w);
 
                 transform.SetPositionAndRotation(p, r);
             }

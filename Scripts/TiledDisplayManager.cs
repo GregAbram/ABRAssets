@@ -382,14 +382,22 @@ public class TiledDisplayManager : MonoBehaviour
             }
         }
     }
+    
+    static float lastTime = -999999.0f;
+
     void Update()
     {
+        
         if (Instance.IsMaster())
         {
             float time = ABREngine.Instance.GetCurrentTime();
-            byte[] bytes = BitConverter.GetBytes(time);
-            messageManager.SendMessage("CurrentTime", bytes);
-        }
+            if (time != lastTime)
+            {
+                byte[] bytes = BitConverter.GetBytes(time);
+                messageManager.SendMessage("CurrentTime", bytes);
+                lastTime = time;
+            }
+       }
         else
         {
             byte[] bytes = messageManager.GetMessage("CurrentTime");
