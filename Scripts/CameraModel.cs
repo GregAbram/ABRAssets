@@ -21,6 +21,7 @@ public class CameraModel : MonoBehaviour
     string cameraFile = "";
 
     TiledDisplayManager tdm = null;
+    bool cacheXform = false;
 
     [Serializable] 
     class CState
@@ -37,6 +38,9 @@ public class CameraModel : MonoBehaviour
 
     void SaveState()
     {
+        if (! cacheXform)
+            return;
+            
         CState cState = new CState();
 
         cState.P = transform.position;
@@ -88,24 +92,25 @@ public class CameraModel : MonoBehaviour
             mouseMovementSensitivity = Convert.ToSingle(s);
         }
         
-        if (! cfg.GetString("-transformCache", out s))
-            s = ".";
-
-        cameraFile = string.Format("{0}/camera", s);
-
-        if (File.Exists(cameraFile))
+        cacheXform = cfg.GetString("-transformCache", out s);
+        if (cacheXform)
         {
-            string[] transforms = System.IO.File.ReadAllLines(cameraFile);
+            cameraFile = string.Format("{0}/camera", s);
 
-            if (transforms.Length > 0)
+            if (File.Exists(cameraFile))
             {
-                string json = transforms[transforms.Length - 1];
-                CState cState = JsonUtility.FromJson<CState>(json);
+                string[] transforms = System.IO.File.ReadAllLines(cameraFile);
 
-                transform.position = cState.P;
-                transform.rotation = cState.R;
-            } 
-        }
+                if (transforms.Length > 0)
+                {
+                    string json = transforms[transforms.Length - 1];
+                    CState cState = JsonUtility.FromJson<CState>(json);
+
+                    transform.position = cState.P;
+                    transform.rotation = cState.R;
+                } 
+            }
+        } 
     }
 
     public virtual bool CameraController()

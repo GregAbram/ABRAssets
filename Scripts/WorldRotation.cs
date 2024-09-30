@@ -19,6 +19,8 @@ public class WorldRotation : MonoBehaviour
 
     TiledDisplayManager tdm = null;
 
+    bool cacheXform = false;
+
     [Serializable]
     public class WorldTransform
     {
@@ -39,28 +41,32 @@ public class WorldRotation : MonoBehaviour
 
         Configurator cfg = ScriptableObject.CreateInstance<Configurator>();
 
-        if (! cfg.GetString("-transformCache", out transformCache))
-            transformCache = ".";
-
-    	worldFile = string.Format("{0}/world", transformCache);
-
-        if (File.Exists(worldFile))
+        cacheXform = cfg.GetString("-transformCache", out transformCache);
+        if (cacheXform)
         {
-            string[] transforms = System.IO.File.ReadAllLines(worldFile);
+            worldFile = string.Format("{0}/world", transformCache);
 
-            if (transforms.Length > 0)
+            if (File.Exists(worldFile))
             {
-                string json = transforms[transforms.Length - 1];
-                WorldState worldState = JsonUtility.FromJson<WorldState>(json);
+                string[] transforms = System.IO.File.ReadAllLines(worldFile);
 
-                transform.position = worldState.P;
-                transform.rotation = worldState.Q;
-            } 
+                if (transforms.Length > 0)
+                {
+                    string json = transforms[transforms.Length - 1];
+                    WorldState worldState = JsonUtility.FromJson<WorldState>(json);
+
+                    transform.position = worldState.P;
+                    transform.rotation = worldState.Q;
+                } 
+            }
         }
     }
 
     void saveState()
     {
+        if (! cacheXform)
+            return;
+            
         WorldState worldState = new WorldState();
 
         worldState.Q = transform.rotation;
@@ -88,7 +94,7 @@ public class WorldRotation : MonoBehaviour
         if (EventSystem.current.IsPointerOverGameObject())
             return;
 
-            bool changed = false;
+        bool changed = false;
 
 		if (tdm.IsMaster())
 		{   
