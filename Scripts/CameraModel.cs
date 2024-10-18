@@ -6,6 +6,7 @@ using UnityEngine.EventSystems;
 using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine.Tilemaps;
 using Unity.VisualScripting;
+using Newtonsoft.Json.Linq;
 
 
 public class CameraModel : MonoBehaviour
@@ -20,6 +21,8 @@ public class CameraModel : MonoBehaviour
     protected bool moved = false;
     string cameraFile = "";
 
+    Vector3 defaultPosition = Vector3.zero;
+    Vector3 defaultForward = new Vector3(0.0f, 0.0f, 1.0f);
     TiledDisplayManager tdm = null;
     bool cacheXform = false;
 
@@ -81,18 +84,20 @@ public class CameraModel : MonoBehaviour
 
         Configurator cfg = ScriptableObject.CreateInstance<Configurator>();
 
-        string s;
-        if (cfg.GetString("-mouseRotationSensitivity", out s))
+        cfg.GetFloat("-mouseRotationSensitivity", out  mouseRotationSensitivity);
+        cfg.GetFloat("-mouseMovementSensitivity", out mouseMovementSensitivity);
+        
+        if (cfg.GetArray("default position", out JToken[] v))
         {
-            mouseRotationSensitivity = Convert.ToSingle(s);
+            defaultPosition = new Vector3(v[0].Value<float>(), v[1].Value<float>(), v[2].Value<float>());
+        }        
+        
+        if (cfg.GetArray("default forward", out v))
+        {
+            defaultPosition = new Vector3(v[0].Value<float>(), v[1].Value<float>(), v[2].Value<float>());
         }
 
-        if (cfg.GetString("-mouseMovementSensitivity", out s))
-        {
-            mouseMovementSensitivity = Convert.ToSingle(s);
-        }
-        
-        cacheXform = cfg.GetString("-transformCache", out s);
+        cacheXform = cfg.GetString("-transformCache", out string s);
         if (cacheXform)
         {
             cameraFile = string.Format("{0}/camera", s);
@@ -141,8 +146,11 @@ public class CameraModel : MonoBehaviour
                 q_r = Quaternion.AngleAxis(inputY, Camera.main.transform.right);
                 q_u = Quaternion.AngleAxis(-inputX, Camera.main.transform.up);
 
-                 transform.rotation = q_r * q_u * transform.rotation;      
-                 changed = true;          
+                Quaternion r = q_r * q_u * transform.rotation;
+                Vector3 forward = r * Vector3.forward;
+                
+                transform.rotation = Quaternion.LookRotation(forward, new Vector3(0.0f, 1.0f, 0.0f));    
+                changed = true;          
             }
         }
             
@@ -170,6 +178,12 @@ public class CameraModel : MonoBehaviour
 
         if (tdm.IsMaster())
         {        
+            if(Input.GetKeyDown("r"))
+            {
+                transform.position = defaultPosition;
+                transform.rotation = Quaternion.LookRotation(defaultForward, new Vector3(0.0f, 1.0f, 0.0f));
+            }
+
             bool changed = CameraController();
             if (changed)
             {

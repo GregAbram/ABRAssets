@@ -14,12 +14,6 @@ public class LookMove : CameraModel
     {	
 		bool changed = false;
 
-		if(Input.GetKeyDown("r"))
-		{
-			transform.position = Vector3.zero;
-			transform.rotation = Quaternion.identity;
-		}
-
 	    if (Input.GetMouseButtonDown(button))
 		{
 	        mouseIsDown = true;
@@ -47,7 +41,11 @@ public class LookMove : CameraModel
 				Quaternion q_r, q_u;
             	q_r = Quaternion.AngleAxis(inputY, Camera.main.transform.right);
             	q_u = Quaternion.AngleAxis(-inputX, Camera.main.transform.up);
-            	transform.rotation = q_r * q_u * transform.rotation;
+
+            	Quaternion r = q_r * q_u * transform.rotation;
+                Vector3 forward = r * Vector3.forward;
+                
+                transform.rotation = Quaternion.LookRotation(forward, new Vector3(0.0f, 1.0f, 0.0f)); 
 				changed = true;
 			}
 
@@ -61,7 +59,7 @@ public class LookMove : CameraModel
 			else
 				transform.position += inputSW * transform.forward;
 		
-			moved = true;
+    			moved = true;
 			changed = true;
 
 		}	
