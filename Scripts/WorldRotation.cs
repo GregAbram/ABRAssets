@@ -3,6 +3,7 @@ using System.IO;
 using UnityEngine;
 using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine.EventSystems;
+using Unity.VisualScripting;
 
 
 
@@ -37,34 +38,48 @@ public class WorldRotation : MonoBehaviour
         tdm = TiledDisplayManager.Instance;
         mainCamera = Camera.main;
 
-        string transformCache;
-
         Configurator cfg = ScriptableObject.CreateInstance<Configurator>();
 
-        cacheXform = cfg.GetString("-transformCache", out transformCache);
-        if (cacheXform)
+        string s;
+        if (cfg.GetString("-transformCache", out s))
         {
-            worldFile = string.Format("{0}/world", transformCache);
-
-            if (File.Exists(worldFile))
+            if (! Directory.Exists(s))
             {
-                string[] transforms = System.IO.File.ReadAllLines(worldFile);
-
-                if (transforms.Length > 0)
-                {
-                    string json = transforms[transforms.Length - 1];
-                    WorldState worldState = JsonUtility.FromJson<WorldState>(json);
-
-                    transform.position = worldState.P;
-                    transform.rotation = worldState.Q;
-                } 
+                Debug.Log("Transforms directory " + s + " does not exist");
+                worldFile = "";
             }
-        }
-    }
+            else
+            {
+                try
+                {
+                    worldFile = string.Format("{0}/world", s);
+                    if (File.Exists(worldFile))
+                    {
+                        string[] transforms = System.IO.File.ReadAllLines(worldFile);
+
+                        if (transforms.Length > 0)
+                        {
+                            string json = transforms[transforms.Length - 1];
+                            WorldState worldState = JsonUtility.FromJson<WorldState>(json);
+
+                            transform.position = worldState.P;
+                            transform.rotation = worldState.Q;
+                        } 
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.Log("Unable to create world transform file " + worldFile);
+                    worldFile = "";
+                }
+            }
+        } 
+
+  }
 
     void saveState()
     {
-        if (! cacheXform)
+        if (worldFile == "")
             return;
             
         WorldState worldState = new WorldState();
@@ -74,19 +89,26 @@ public class WorldRotation : MonoBehaviour
 
         var json = JsonUtility.ToJson(worldState);
 
-        if (File.Exists(worldFile))
+        try
         {
-            var fn = File.AppendText(worldFile);
-            fn.Write(json);
-            fn.Write("\n");
-            fn.Close();
-        }
-        else
+            if (File.Exists(worldFile))
+            {
+                var fn = File.AppendText(worldFile);
+                fn.Write(json);
+                fn.Write("\n");
+                fn.Close();
+            }
+            else
+            {
+                var fn = File.CreateText(worldFile);
+                fn.Write(json);
+                fn.Write("\n");
+                fn.Close();
+            }            
+        }            
+        catch (Exception e)
         {
-            var fn = File.CreateText(worldFile);
-            fn.Write(json);
-            fn.Write("\n");
-            fn.Close();
+            Debug.Log("Cannot create or write world transform history file " + worldFile);
         }
     }
     void Update()

@@ -12,24 +12,28 @@ public class LookMove : CameraModel
 {
     public override bool CameraController()
     {	
-		bool changed = false;
+		bool save = false;
+
+		if(Input.GetKeyDown("r"))
+		{
+			transform.position = Vector3.zero;
+			transform.rotation = Quaternion.identity;
+			save = true;
+		}
 
 	    if (Input.GetMouseButtonDown(button))
 		{
 	        mouseIsDown = true;
 			lastPosition = Input.mousePosition;
-			moved = false;
 		}
 		else if (Input.GetMouseButtonUp(button))   
 		{
 			mouseIsDown = false;
-			saveState = moved;
+			save = true;
 		}
 	   
 	    if (mouseIsDown)
 	    {
-			moved = true;
-
             Vector3 currentPosition = Input.mousePosition;
             Vector3 deltaPosition = currentPosition - lastPosition;
 			lastPosition = currentPosition;
@@ -41,14 +45,8 @@ public class LookMove : CameraModel
 				Quaternion q_r, q_u;
             	q_r = Quaternion.AngleAxis(inputY, Camera.main.transform.right);
             	q_u = Quaternion.AngleAxis(-inputX, Camera.main.transform.up);
-
-            	Quaternion r = q_r * q_u * transform.rotation;
-                Vector3 forward = r * Vector3.forward;
-                
-                transform.rotation = Quaternion.LookRotation(forward, new Vector3(0.0f, 1.0f, 0.0f)); 
-				changed = true;
+            	transform.rotation = q_r * q_u * transform.rotation;
 			}
-
 		}
 
 		float inputSW = Input.GetAxis("Mouse ScrollWheel") * mouseMovementSensitivity;
@@ -59,12 +57,11 @@ public class LookMove : CameraModel
 			else
 				transform.position += inputSW * transform.forward;
 		
-    			moved = true;
-			changed = true;
+			save = true;
 
 		}	
 
-		return changed;
+		return save;
      }
 }
 

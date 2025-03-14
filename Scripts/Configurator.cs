@@ -6,14 +6,13 @@ using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Unity.VisualScripting;
 
 
 public class Configurator : ScriptableObject
 {
     public static Configurator Instance { get; set; }
 
-    private Dictionary<string, JToken> cfg = new Dictionary<string, JToken>();
+    private Dictionary<string, string> cfg = new Dictionary<string, string>();
 
     private void Awake()
     {   
@@ -39,7 +38,7 @@ public class Configurator : ScriptableObject
             JObject json = JObject.Parse(s);
             foreach (var i in json)
             {
-                cfg[i.Key] = i.Value;
+                cfg[i.Key] = i.Value.ToString();
             }
         }
         catch
@@ -69,40 +68,12 @@ public class Configurator : ScriptableObject
     { 
         if (Instance.cfg.ContainsKey(k))
         {
-            v = Instance.cfg[k].ToString();
+            v = Instance.cfg[k];
             return true;
         }
         else
         {
             v = "none";           
-            return false;
-        }
-    }
-
-    public bool GetArray(string k, out JToken[] array)
-    {
-        if (Instance.cfg.ContainsKey(k))
-        {
-            array = Instance.cfg[k].ToArray();
-            return true;
-        }
-        else
-        {
-            array = null;           
-            return false;
-        }
-    }
-
-    public bool GetFloat(string k, out float v)
-    {
-        if (Instance.cfg.ContainsKey(k))
-        {
-            v = Instance.cfg[k].Value<float>();
-            return true;
-        }
-        else
-        {
-            v = 0;           
             return false;
         }
     }
