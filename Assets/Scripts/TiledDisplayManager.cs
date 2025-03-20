@@ -388,6 +388,9 @@ public class TiledDisplayManager : MonoBehaviour
     void Update()
     {
         
+        if (NumberOfTiles() == 0)
+            return;
+
         if (Instance.IsMaster())
         {
             float time = ABREngine.Instance.GetCurrentTime();
