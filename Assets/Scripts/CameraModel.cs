@@ -11,12 +11,13 @@ using Unity.VisualScripting;
 public class CameraModel : MonoBehaviour
 {
     public string message_tag = "camera model";
+    public string cache_name = "world";
     public int button = 0;
     public float mouseRotationSensitivity = .1f;
     public float mouseMovementSensitivity = 2f;
     protected Vector3 lastPosition;
     protected bool mouseIsDown = false;
-    string cameraFile = "";
+    string cameraFile = "camera";
 
     TiledDisplayManager tdm = null;
 
@@ -107,7 +108,7 @@ public class CameraModel : MonoBehaviour
             {
                 try
                 {
-                    cameraFile = string.Format("{0}/camera", s);
+                    cameraFile = string.Format("{0}/{1}", s, cameraFile);
                     if (File.Exists(cameraFile))
                     {
                         string[] transforms = System.IO.File.ReadAllLines(cameraFile);
@@ -124,7 +125,7 @@ public class CameraModel : MonoBehaviour
                 }
                 catch (Exception e)
                 {
-                    Debug.LogFormat("Unable to create camera transform ile {0}", cameraFile);
+                    Debug.LogFormat("Unable to create  transform file {0}/{1}", s, cameraFile));
                     cameraFile = "";
                 }
             }

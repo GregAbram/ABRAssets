@@ -14,7 +14,7 @@ public class WorldRotation : MonoBehaviour
     public float worldRotationSensitivity = 2f;
     Vector3 lastPosition;
     bool mouseIsDown = false;
-    string worldFile = ""; 
+    public string worldFile = "world"; 
 
     Camera mainCamera;
 
@@ -52,7 +52,7 @@ public class WorldRotation : MonoBehaviour
             {
                 try
                 {
-                    worldFile = string.Format("{0}/world", s);
+                    worldFile = string.Format("{0}/{1}", s, worldFile);
                     if (File.Exists(worldFile))
                     {
                         string[] transforms = System.IO.File.ReadAllLines(worldFile);

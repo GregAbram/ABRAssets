@@ -259,7 +259,7 @@ public class TiledDisplayManager : MonoBehaviour
         Configurator cfg = ScriptableObject.CreateInstance<Configurator>();
 
         string wallConfigFileName;
-        if (! cfg.GetString("wallConfig", out wallConfigFileName))
+        if (! cfg.GetString("-wallConfig", out wallConfigFileName))
         {
             string home = System.Environment.GetEnvironmentVariable("USERPROFILE");
             if (home == null)

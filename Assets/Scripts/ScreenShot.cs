@@ -42,7 +42,7 @@ public class ScreenShot : MonoBehaviour
             else
                 multiplier = 2;
 
-            string filename = string.Format(screenshot_template, shotCount);
+            string filename = string.Format(screenshot_template, DateTime.Now.ToString("MM-dd-yyyy-h-mm-tt"));
 
             if (screenshot_cache != "")
                 filename = screenshot_cache + "/" + filename;
