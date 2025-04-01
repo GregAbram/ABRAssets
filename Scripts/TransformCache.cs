@@ -3,10 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
-using UnityEngine.InputSystem.LowLevel;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Diagnostics.Tracing;
-using TMPro;
 
 public class TransformCache : MonoBehaviour
 {
