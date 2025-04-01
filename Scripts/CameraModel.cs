@@ -125,7 +125,7 @@ public class CameraModel : MonoBehaviour
                 }
                 catch (Exception e)
                 {
-                    Debug.LogFormat("Unable to create  transform file {0}/{1}", s, cameraFile));
+                    Debug.LogFormat("Unable to create  transform file {0}/{1}", s, cameraFile);
                     cameraFile = "";
                 }
             }
