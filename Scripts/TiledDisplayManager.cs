@@ -15,17 +15,6 @@ using System.Net.Http;
 // connections downward.   So the master has no Server and multiple recipients, while the clients have Servers
 // but no recipients.
 
-#if true
-
-public class TiledDisplayManager : MonoBehaviour
-{
-    void Update()
-    {
-    }
-}
-
-#else
-
 public class MessageRecipient
 {
     TcpClient _client;
@@ -424,4 +413,3 @@ public class TiledDisplayManager : MonoBehaviour
     }
     
 }
-#endif
