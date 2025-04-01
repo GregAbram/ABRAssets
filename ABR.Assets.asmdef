@@ -1,7 +1,6 @@
 {
     "name": "ABR.Assets",
-    "references": [
-    ],
+    "references": [ "IVLab.ABREngine.Runtime" ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
