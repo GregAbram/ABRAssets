@@ -1,16 +1,9 @@
 {
-  "name": "abr_assets",
+  "name": "edu.tacc.abr.assets",
+  "displayName": "TACC ABR assets",
   "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://gitlab.tacc.utexas.edu/gda/ABR_Assets.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": ""
+  "unity": "2022.3",
+  "author": { "name": "Greg Abram", "email": "gda@tacc.utexas.edu" },
+  "description": "A collection of assets useful when building ABR-enabled applications etc.   Also tiled display wall management",
+  "dependencies": { "com.unity.inputsystem": "1.7.0", "tacc.unity.abrengine": "2023.3.0"}
 }
