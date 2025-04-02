@@ -3,8 +3,7 @@ using System.IO;
 using UnityEngine;
 using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine.EventSystems;
-using Unity.VisualScripting;
-
+using IVLab.ABREngine;
 
 
 public class WorldRotation : MonoBehaviour
@@ -52,7 +51,7 @@ public class WorldRotation : MonoBehaviour
             {
                 try
                 {
-                    worldFile = string.Format("{0}/{1}", s, worldFile);
+                    worldFile = string.Format("{0}/{1}/{2}", ABREngine.Instance.Config.abr_root, s, worldFile);
                     if (File.Exists(worldFile))
                     {
                         string[] transforms = System.IO.File.ReadAllLines(worldFile);

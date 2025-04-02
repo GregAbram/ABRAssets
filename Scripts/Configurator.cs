@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using IVLab.ABREngine;
 
 
 public class Configurator : ScriptableObject
@@ -24,13 +25,7 @@ public class Configurator : ScriptableObject
 
         Instance = this;
 
-        string envDir = Environment.GetEnvironmentVariable("ABRConfig");
-        string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-
-        if (envDir == null)
-            envDir = home;
-     
-        string cfgFile = Path.Combine(envDir, "svis.json");
+        string cfgFile = Path.Combine(ABREngine.Instance.Config.abr_root, "svis.json");
 
         try
         {
@@ -38,7 +33,7 @@ public class Configurator : ScriptableObject
             JObject json = JObject.Parse(s);
             foreach (var i in json)
             {
-                cfg[i.Key] = i.Value.ToString();
+                Instance.cfg[i.Key] = i.Value.ToString();
             }
         }
         catch
@@ -58,7 +53,7 @@ public class Configurator : ScriptableObject
             }
             else 
             {
-                cfg[args[i]] = args[i+1];
+                Instance.cfg[args[i]] = args[i+1];
             }
         }
 

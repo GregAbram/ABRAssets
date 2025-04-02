@@ -261,11 +261,7 @@ public class TiledDisplayManager : MonoBehaviour
         string wallConfigFileName;
         if (! cfg.GetString("-wallConfig", out wallConfigFileName))
         {
-            string home = System.Environment.GetEnvironmentVariable("USERPROFILE");
-            if (home == null)
-                home = System.Environment.GetEnvironmentVariable("HOME");
-            Debug.Log("HOME is " + home);
-            wallConfigFileName = Path.Combine(home, "wall.json");
+            wallConfigFileName = string.Format("{0}/wall.json", ABREngine.Instance.Config.abr_root);
         }
 
         if (! File.Exists(wallConfigFileName))

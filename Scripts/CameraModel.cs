@@ -4,9 +4,7 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using System.Runtime.Serialization.Formatters.Binary;
-using UnityEngine.Tilemaps;
-using Unity.VisualScripting;
-
+using IVLab.ABREngine;
 
 public class CameraModel : MonoBehaviour
 {
@@ -108,7 +106,7 @@ public class CameraModel : MonoBehaviour
             {
                 try
                 {
-                    cameraFile = string.Format("{0}/{1}", s, cameraFile);
+                    cameraFile = string.Format("{0}/{1}/{2}", ABREngine.Instance.Config.abr_root, s, cameraFile);
                     if (File.Exists(cameraFile))
                     {
                         string[] transforms = System.IO.File.ReadAllLines(cameraFile);
