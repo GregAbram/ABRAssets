@@ -45,10 +45,10 @@ public class WorldRotation : MonoBehaviour
 
             string dirName = string.Format("{0}/{1}", ABREngine.Instance.Config.abr_root, s);
 
-            if (! Directory.Exists(dirname))
+            if (! Directory.Exists(dirName))
             {
                 Debug.LogFormat("Transforms directory {0} does not exist", dirName);
-                cameraFile = "";
+                worldFile = "";
             }
             else
             {
