@@ -97,16 +97,19 @@ public class CameraModel : MonoBehaviour
         
         if (cfg.GetString("-transformCache", out s))
         {
-            if (! Directory.Exists(s))
+
+            string dirName = string.Format("{0}/{1}", ABREngine.Instance.Config.abr_root, s);
+
+            if (! Directory.Exists(dirname))
             {
-                Debug.LogFormat("Transforms directory {0} does not exist", s);
+                Debug.LogFormat("Transforms directory {0} does not exist", dirName);
                 cameraFile = "";
             }
             else
             {
                 try
                 {
-                    cameraFile = string.Format("{0}/{1}/{2}", ABREngine.Instance.Config.abr_root, s, cameraFile);
+                    cameraFile = string.Format("{0}/{1}", dirName, cameraFile);
                     if (File.Exists(cameraFile))
                     {
                         string[] transforms = System.IO.File.ReadAllLines(cameraFile);
@@ -123,7 +126,7 @@ public class CameraModel : MonoBehaviour
                 }
                 catch (Exception e)
                 {
-                    Debug.LogFormat("Unable to create  transform file {0}/{1}", s, cameraFile);
+                    Debug.LogFormat("Unable to create  transform file {0}", cameraFile);
                     cameraFile = "";
                 }
             }

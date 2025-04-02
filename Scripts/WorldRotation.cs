@@ -42,16 +42,19 @@ public class WorldRotation : MonoBehaviour
         string s;
         if (cfg.GetString("-transformCache", out s))
         {
-            if (! Directory.Exists(s))
+
+            string dirName = string.Format("{0}/{1}", ABREngine.Instance.Config.abr_root, s);
+
+            if (! Directory.Exists(dirname))
             {
-                Debug.Log("Transforms directory " + s + " does not exist");
-                worldFile = "";
+                Debug.LogFormat("Transforms directory {0} does not exist", dirName);
+                cameraFile = "";
             }
             else
             {
                 try
                 {
-                    worldFile = string.Format("{0}/{1}/{2}", ABREngine.Instance.Config.abr_root, s, worldFile);
+                    worldFile = string.Format("{0}/{1}", dirName, worldFile);
                     if (File.Exists(worldFile))
                     {
                         string[] transforms = System.IO.File.ReadAllLines(worldFile);
