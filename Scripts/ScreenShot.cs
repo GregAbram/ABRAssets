@@ -13,17 +13,21 @@ public class ScreenShot : MonoBehaviour
     void Start()
     {
         Configurator cfg = ScriptableObject.CreateInstance<Configurator>();
-        if (cfg.GetString("-screenshotCache", out screenshot_cache))
+        
+        string s;
+        if (cfg.GetString("-screenshotCache", out s))
+            screenshot_cache = Path.Combine(ABREngine.Instance.Config.abr_root, s);
+        else
+            screenshot_cache = Path.Combine(ABREngine.Instance.Config.abr_root, "screenshots");
+
+        if (! Directory.Exists(screenshot_cache))
         {
-            if (! Directory.Exists(screenshot_cache))
-            {
-                Debug.Log("Screenshot directory " + screenshot_cache + " does not exist");
-                screenshot_cache = "";
-            }
-            else
-            {
-                 Debug.Log("Using ScreenShot Cache: " + screenshot_cache);
-            }
+            Debug.Log("Screenshot directory " + screenshot_cache + " does not exist");
+            screenshot_cache = "";
+        }
+        else
+        {
+                Debug.Log("Using ScreenShot Cache: " + screenshot_cache);
         }
     }
 
