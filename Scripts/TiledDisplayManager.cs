@@ -102,6 +102,13 @@ public class TiledDisplayManager : MonoBehaviour
 
             return msg;
         }
+
+        public void SendMessage(string  tag)
+        {
+            foreach (var recipient in _recipients)
+                recipient.SendString(tag);
+        }
+
         public void SendMessage(string tag, byte[] msg)
         {
             foreach (var recipient in _recipients)
@@ -109,7 +116,8 @@ public class TiledDisplayManager : MonoBehaviour
                 lock(recipient)
                 {
                     recipient.SendString(tag);
-                    recipient.SendBytes(msg);
+                    if (msg.Length > 0)
+                        recipient.SendBytes(msg);
                 }
             }
         }
@@ -137,7 +145,7 @@ public class TiledDisplayManager : MonoBehaviour
                 string tag = System.Text.Encoding.UTF8.GetString(tagBytes);  
 
                 if (tag == "quit")
-                    Environment.Exit(0);
+                    Application.Quit();
                 
                 byte[] msg = _ReadBytes(client);
 
@@ -383,12 +391,19 @@ public class TiledDisplayManager : MonoBehaviour
 
     void Update()
     {
-        
-        if (NumberOfTiles() == 0)
-            return;
-
         if (Instance.IsMaster())
-        {
+        {   
+            if (Input.GetKeyDown(KeyCode.Q))
+            {
+                if (NumberOfTiles() > 0)
+                    messageManager.SendMessage("quit");
+
+                Application.Quit();
+            }
+    
+            if (NumberOfTiles() == 0)
+                return;
+
             float time = ABREngine.Instance.GetCurrentTime();
             if (time != lastTime)
             {

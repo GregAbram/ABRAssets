@@ -67,6 +67,8 @@ public class CameraModel : MonoBehaviour
         }
     }
 
+    static bool first = true;
+
     public virtual void Start()
     {
         tdm = TiledDisplayManager.Instance;
@@ -79,7 +81,28 @@ public class CameraModel : MonoBehaviour
 
             Camera cam = GetComponent<Camera>(); 
             cam.projectionMatrix = PerspectiveOffCenter(ws * l, ws * r, ws * b, ws * t, cam.nearClipPlane, cam.farClipPlane);
+#if false
+            for (var i = 0; i < 4; i++)
+                Debug.LogFormat("M{0} {1} {2} {3} {4}", i, 
+                    cam.projectionMatrix[i, 0],
+                    cam.projectionMatrix[i, 1],
+                    cam.projectionMatrix[i, 2],
+                    cam.projectionMatrix[i, 3]);
+#endif
             return;
+        }
+        else if (first)
+        {
+            first = false;
+            Camera cam = GetComponent<Camera>(); 
+#if false
+            for (var i = 0; i < 4; i++)
+                Debug.LogFormat("M{0} {1} {2} {3} {4}", i, 
+                    cam.projectionMatrix[i, 0],
+                    cam.projectionMatrix[i, 1],
+                    cam.projectionMatrix[i, 2],
+                    cam.projectionMatrix[i, 3]);
+#endif 
         }
 
         Configurator cfg = ScriptableObject.CreateInstance<Configurator>();
@@ -190,36 +213,37 @@ public class CameraModel : MonoBehaviour
             {
                 SaveState();
                 saveState = false;
+            }
 
-                if (tdm.NumberOfTiles() > 0)
-                {
-                    CurrentView cv = new CurrentView();
-                    var fmt = new BinaryFormatter();
-                    var ms = new MemoryStream();
-                
-                    Vector3 p;
-                    Quaternion r;
-                    transform.GetPositionAndRotation(out p, out r);
+            if (tdm.NumberOfTiles() > 0)
+            {
+                CurrentView cv = new CurrentView();
+                var fmt = new BinaryFormatter();
+                var ms = new MemoryStream();
+            
+                Vector3 p;
+                Quaternion r;
+                transform.GetPositionAndRotation(out p, out r);
 
-                    cv.px = p.x;
-                    cv.py = p.y;
-                    cv.pz = p.z;
-                    cv.rx = r.x;
-                    cv.ry = r.y;
-                    cv.rz = r.z;
-                    cv.rw = r.w;
+                cv.px = p.x;
+                cv.py = p.y;
+                cv.pz = p.z;
+                cv.rx = r.x;
+                cv.ry = r.y;
+                cv.rz = r.z;
+                cv.rw = r.w;
 
-                    fmt.Serialize(ms, cv);
-                    byte[] message = ms.ToArray();
+                fmt.Serialize(ms, cv);
+                byte[] message = ms.ToArray();
 
-                    tdm.messageManager.SendMessage(message_tag, message);
-                    Debug.LogFormat("CAM {0} {1} {2} {4} {5} {6} {7}", p.x, p.y, p.z, r.x, r.y, r.z, r.w);
-                }
+                tdm.messageManager.SendMessage(message_tag, message);
+#if false
+                Debug.LogFormat("CAM {0} {1} {2} {3} {4} {5} {6}", p.x, p.y, p.z, r.x, r.y, r.z, r.w);
+#endif
             }
         }
         else
         {
-            Debug.Log("CMU s");
             byte[] currentViewMessage = tdm.messageManager.GetMessage(message_tag);
             if (currentViewMessage != null)
             {
@@ -229,7 +253,10 @@ public class CameraModel : MonoBehaviour
 
                 Vector3 p = new Vector3(cv.px, cv.py, cv.pz);
                 Quaternion r = new Quaternion(cv.rx, cv.ry, cv.rz, cv.rw);
+#if false
 
+                Debug.LogFormat("CAM {0} {1} {2} {3} {4} {5} {6}", p.x, p.y, p.z, r.x, r.y, r.z, r.w);
+#endif
                 transform.SetPositionAndRotation(p, r);
             }
         }
@@ -237,7 +264,7 @@ public class CameraModel : MonoBehaviour
 
     static Matrix4x4 PerspectiveOffCenter(float left, float right, float bottom, float top, float near, float far)
     {
-        //Debug.Log("OC " + left + " " + right + " " + bottom + " " + top);
+        Debug.Log("OC " + left + " " + right + " " + bottom + " " + top);
         float x = 2.0F * near / (right - left);
         float y = 2.0F * near / (top - bottom);
         float a = (right + left) / (right - left);
