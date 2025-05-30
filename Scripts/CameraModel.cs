@@ -80,7 +80,7 @@ public class CameraModel : MonoBehaviour
             tdm.GetOffset(out l, out r, out b, out t); 
 
             float ws = tdm.GetWallScaling();
-
+ 
             Camera cam = GetComponent<Camera>(); 
             cam.projectionMatrix = PerspectiveOffCenter(ws * l, ws * r, ws * b, ws * t, cam.nearClipPlane, cam.farClipPlane);
 #if false
@@ -109,17 +109,17 @@ public class CameraModel : MonoBehaviour
 
         Configurator cfg = ScriptableObject.CreateInstance<Configurator>();
 
-        if (cfg.GetString("-cameraCache", out transformCache))
+        if (cfg.GetString("-cameraCache", out cameraFile))
         {
             string envDir;
-            if (! cfg.GetString("-ABRConfig", out envDir))
+            if (!cfg.GetString("-ABRConfig", out envDir))
                 envDir = Environment.GetEnvironmentVariable("ABRConfig");
 
             if (envDir == null)
                 envDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        
+
             cacheCamera = true;
-            cameraFile = string.Format("{0}/{1}", envDir, transformCache);
+            cameraFile = string.Format("{0}/{1}", envDir, cameraFile);
 
             if (File.Exists(cameraFile))
             {
@@ -132,52 +132,21 @@ public class CameraModel : MonoBehaviour
 
                     transform.position = cState.P;
                     transform.rotation = cState.R;
-                } 
+                }
             }
-	}
+        }
 
         string s;
+           
+        if (cfg.GetString("-mouseMovementSensitivity", out s))
+        {
+            mouseMovementSensitivity = Convert.ToSingle(s);
+        }
+
         if (cfg.GetString("-mouseRotationSensitivity", out s))
         {
             mouseRotationSensitivity = Convert.ToSingle(s);
         }
-        
-        if (cfg.GetString("-transformCache", out s))
-        {
-
-            string dirName = string.Format("{0}/{1}", ABREngine.Instance.Config.abr_root, s);
-
-            if (! Directory.Exists(dirName))
-            {
-                Debug.LogFormat("Transforms directory {0} does not exist", dirName);
-                cameraFile = "";
-            }
-            else
-            {
-                try
-                {
-                    cameraFile = string.Format("{0}/{1}", dirName, cameraFile);
-                    if (File.Exists(cameraFile))
-                    {
-                        string[] transforms = System.IO.File.ReadAllLines(cameraFile);
-
-                        if (transforms.Length > 0)
-                        {
-                            string json = transforms[transforms.Length - 1];
-                            CState cState = JsonUtility.FromJson<CState>(json);
-
-                            transform.position = cState.P;
-                            transform.rotation = cState.R;
-                        } 
-                    }
-                }
-                catch (Exception e)
-                {
-                    Debug.LogFormat("Unable to create  transform file {0}", cameraFile);
-                    cameraFile = "";
-                }
-            }
-        } 
     }
 
     public virtual bool CameraController()

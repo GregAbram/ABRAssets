@@ -21,6 +21,8 @@ public class WorldRotation : MonoBehaviour
 
     bool cacheXform = false;
 
+    string transformCache;
+
     [Serializable]
     public class WorldTransform
     {

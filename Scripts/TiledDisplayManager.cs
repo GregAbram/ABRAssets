@@ -267,10 +267,20 @@ public class TiledDisplayManager : MonoBehaviour
         Configurator cfg = ScriptableObject.CreateInstance<Configurator>();
 
         string wallConfigFileName;
-        if (! cfg.GetString("-wallConfig", out wallConfigFileName))
+        if (!cfg.GetString("-wallConfig", out wallConfigFileName))
         {
-            wallConfigFileName = string.Format("{0}/wall.json", ABREngine.Instance.Config.abr_root);
+            wallConfigFileName = "wall.json";
         }
+
+        string envDir;
+        if (!cfg.GetString("-ABRConfig", out envDir))
+            envDir = Environment.GetEnvironmentVariable("ABRConfig");
+
+        if (envDir == null)
+            envDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+
+        wallConfigFileName = string.Format("{0}/{1}}", envDir, wallConfigFileName);
 
         if (! File.Exists(wallConfigFileName))
         {
