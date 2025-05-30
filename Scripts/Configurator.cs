@@ -17,17 +17,36 @@ public class Configurator : ScriptableObject
     {   
         if (Instance != null && Instance != this)
         {
-            //Destroy(this);
             return;
         }
 
         Instance = this;
 
-        string envDir = Environment.GetEnvironmentVariable("ABRConfig");
-        string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        var args = System.Environment.GetCommandLineArgs();
 
-        if (envDir == null)
-            envDir = home;
+        for (var i = 1; i < args.Length; i += 2)
+        {
+            var a = args[i];
+            if (a[0] != '-' | i == (args.Length - 1))
+            {
+                Debug.Log("command line error");
+                break;
+            }
+            else 
+            {
+                cfg[args[i]] = args[i+1];
+            }
+        }
+
+        string envDir;
+        if (cfg.ContainsKey("-ABRConfig"))
+            envDir = cfg["-ABRConfig"];
+        else
+        {
+            envDir = Environment.GetEnvironmentVariable("ABRConfig");
+            if (envDir != null)
+                envDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        }
      
         string cfgFile = Path.Combine(envDir, "svis.cfg");
 
@@ -50,22 +69,7 @@ public class Configurator : ScriptableObject
             Debug.Log("No configuration file");
         }
 
-        var args = System.Environment.GetCommandLineArgs();
-
-        for (var i = 1; i < args.Length; i += 2)
-        {
-            var a = args[i];
-            if (a[0] != '-' | i == (args.Length - 1))
-            {
-                Debug.Log("command line error");
-                break;
-            }
-            else 
-            {
-                cfg[args[i]] = args[i+1];
-            }
-        }
-
+ 
     }
 
     public bool GetString(string k, out string v) 

@@ -22,6 +22,8 @@ public class CameraModel : MonoBehaviour
 
     TiledDisplayManager tdm = null;
 
+    bool cacheCamera = false;
+
     [Serializable] 
     class CState
     {
@@ -37,6 +39,9 @@ public class CameraModel : MonoBehaviour
 
     void SaveState()
     {
+        if (! cacheCamera)
+            return;
+
         CState cState = new CState();
 
         cState.P = transform.position;
@@ -79,23 +84,31 @@ public class CameraModel : MonoBehaviour
 
         Configurator cfg = ScriptableObject.CreateInstance<Configurator>();
 
-        if (! cfg.GetString("-transformCache", out transformCache))
-            transformCache = ".";
-
-        cameraFile = string.Format("{0}/camera", transformCache);
-
-        if (File.Exists(cameraFile))
+        if (cfg.GetString("-cameraCache", out transformCache))
         {
-            string[] transforms = System.IO.File.ReadAllLines(cameraFile);
+            string envDir;
+            if (! cfg.GetString("-ABRConfig", out envDir))
+                envDir = Environment.GetEnvironmentVariable("ABRConfig");
 
-            if (transforms.Length > 0)
+            if (envDir == null)
+                envDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        
+            cacheCamera = true;
+            cameraFile = string.Format("{0}/{1}", envDir, transformCache);
+
+            if (File.Exists(cameraFile))
             {
-                string json = transforms[transforms.Length - 1];
-                CState cState = JsonUtility.FromJson<CState>(json);
+                string[] transforms = System.IO.File.ReadAllLines(cameraFile);
 
-                transform.position = cState.P;
-                transform.rotation = cState.R;
-            } 
+                if (transforms.Length > 0)
+                {
+                    string json = transforms[transforms.Length - 1];
+                    CState cState = JsonUtility.FromJson<CState>(json);
+
+                    transform.position = cState.P;
+                    transform.rotation = cState.R;
+                } 
+            }
         }
     }
 
