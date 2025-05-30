@@ -3,49 +3,49 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
-using UnityEngine.InputSystem.LowLevel;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Diagnostics.Tracing;
 using System.Security.Cryptography;
 
 public class LookMove : CameraModel
 {
-    public override void CameraController()
+    public override bool CameraController()
     {	
+		bool save = false;
+
 		if(Input.GetKeyDown("r"))
 		{
 			transform.position = Vector3.zero;
 			transform.rotation = Quaternion.identity;
+			save = true;
 		}
 
 	    if (Input.GetMouseButtonDown(button))
 		{
 	        mouseIsDown = true;
 			lastPosition = Input.mousePosition;
-			moved = false;
 		}
 		else if (Input.GetMouseButtonUp(button))   
 		{
 			mouseIsDown = false;
-			saveState = moved;
+			save = true;
 		}
 	   
 	    if (mouseIsDown)
 	    {
-			moved = true;
-
             Vector3 currentPosition = Input.mousePosition;
             Vector3 deltaPosition = currentPosition - lastPosition;
 			lastPosition = currentPosition;
 
             float inputX = deltaPosition.x * mouseRotationSensitivity;
             float inputY = deltaPosition.y * mouseRotationSensitivity;
-
-            Quaternion q_r, q_u;
-            q_r = Quaternion.AngleAxis(inputY, Camera.main.transform.right);
-            q_u = Quaternion.AngleAxis(-inputX, Camera.main.transform.up);
-
-            transform.rotation = q_r * q_u * transform.rotation;
+			if (inputX != 0 || inputY != 0)
+			{
+				Quaternion q_r, q_u;
+            	q_r = Quaternion.AngleAxis(inputY, Camera.main.transform.right);
+            	q_u = Quaternion.AngleAxis(-inputX, Camera.main.transform.up);
+            	transform.rotation = q_r * q_u * transform.rotation;
+			}
 		}
 
 		float inputSW = Input.GetAxis("Mouse ScrollWheel") * mouseMovementSensitivity;
@@ -56,8 +56,11 @@ public class LookMove : CameraModel
 			else
 				transform.position += inputSW * transform.forward;
 		
-			moved = true;
+			save = true;
+
 		}	
+
+		return save;
      }
 }
 

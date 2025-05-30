@@ -1,129 +1,221 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Xml.Serialization;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.InputSystem.Utilities;
-using UnityEngine.Rendering;
+using IVLab.ABREngine;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Net.Http;
+// using IVLab.Utilities;
 
-public class MySocket 
+// The communication pattern is that the Server processes messages from above and the MessageRecipients represent 
+// connections downward.   So the master has no Server and multiple recipients, while the clients have Servers
+// but no recipients.
+
+public class MessageRecipient
 {
-    Socket skt = null;
+    TcpClient _client;
+    NetworkStream _stream;
 
-    public MySocket()
+    public MessageRecipient(string host, int port)
     {
-        Socket srvr = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        srvr.Bind(new IPEndPoint(IPAddress.Any, 1902));
-        srvr.Listen(1);
-        Debug.Log("Listening...............");
-        skt = srvr.Accept();
-        Debug.Log("Accepted!");
+        _client = new(host, port);
+        _stream = _client.GetStream();
+    }   
+
+    public void SendInt(int n)
+    {
+        byte[] bytes = System.BitConverter.GetBytes(n);
+        _stream.Write(bytes, 0, bytes.Length);
     }
 
-    public MySocket(string srvr)
-    {   
-        Debug.LogFormat("Trying to connect to tile server on {0}", srvr);
-
-        IPHostEntry he = Dns.GetHostEntry(srvr);
-        if (he.AddressList.Length == 0)
-        {
-            Debug.LogFormat("Error getting IP address for {0}", srvr);
-            Application.Quit();
-        }
-
-        skt = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-
-
-        foreach (var addr in he.AddressList)
-        {
-            var conn = new IPEndPoint(addr, 1902);
-            try
-            {
-                skt.Connect(conn);
-                break;
-            }
-            catch
-            {
-            }
-        }
+    public void SendBytes(byte[] bytes)
+    {
+        SendInt(bytes.Length);
+        _stream.Write(bytes, 0, bytes.Length);
     }
 
-    public bool IsConnected()
+    public void SendString(string str)
     {
-        return skt.Connected;   
-    }
-
-    public void Send(byte[] bytes)
-    {
-        int remaining = bytes.Length;
-        int offset = 0, r;
-        do
-        {
-            r = skt.Send(bytes, offset, remaining, SocketFlags.None);
-            remaining -= r; 
-            offset += r;    
-        } while (remaining > 0 && r != 0); 
-
-        if (r == 0)
-            Application.Quit();       
-    }
-
-    public void Receive(ref byte[] bytes)
-    {
-
-        int remaining = bytes.Length;
-        int offset = 0, r;
-        do
-        {
-            r = skt.Receive(bytes, offset, remaining, SocketFlags.None);
-            remaining -= r;
-            offset += r;
-        } while (remaining > 0 && r != 0); 
-
-        if (r == 0)
-            Application.Quit();
+        byte[] bytes = Encoding.UTF8.GetBytes(str);
+        SendBytes(bytes);
     }
 }
-
-public class TiledDisplayManager : ScriptableObject
+public class TiledDisplayManager : MonoBehaviour
 {
+    public class MessageManager
+    {
+        private int _port;
+        private List<MessageRecipient> _recipients = new List<MessageRecipient>();
+        private Dictionary<string, byte[]> _messages = new Dictionary<string, byte[]>();
+        public class MessageRecipient
+        {
+            NetworkStream _stream;
+
+            public MessageRecipient(string host, int port)
+            {
+                TcpClient client = new(host, port);
+                _stream = client.GetStream();
+            }
+            public void SendInt(int n)
+            {
+                byte[] bytes = System.BitConverter.GetBytes(n);
+                _stream.Write(bytes, 0, bytes.Length);
+            }
+
+            public void SendBytes(byte[] bytes)
+            {
+                SendInt(bytes.Length);
+                _stream.Write(bytes, 0, bytes.Length);
+            }
+
+            public void SendString(string str)
+            {
+                byte[] bytes = Encoding.UTF8.GetBytes(str);
+                SendBytes(bytes);
+            }
+        }
+        public MessageManager(int p)
+        {
+            _port = p;
+        }
+        public void AddRecipient(string host)
+        { 
+            _recipients.Add(new MessageRecipient(host, _port));
+        }
+
+        public byte[] GetMessage(string tag)
+        {
+            byte[] msg = null;
+
+            lock(_messages)
+            {
+                if (_messages.ContainsKey(tag))
+                {
+                    msg = _messages[tag];
+                    _messages.Remove(tag);
+                }
+            }
+
+            return msg;
+        }
+
+        public void SendMessage(string  tag)
+        {
+            foreach (var recipient in _recipients)
+                recipient.SendString(tag);
+        }
+
+        public void SendMessage(string tag, byte[] msg)
+        {
+            foreach (var recipient in _recipients)
+            {
+                lock(recipient)
+                {
+                    recipient.SendString(tag);
+                    if (msg.Length > 0)
+                        recipient.SendBytes(msg);
+                }
+            }
+        }
+
+        private byte[] _ReadBytes(TcpClient sender)
+        {
+            byte[] lbuf = new byte[4];
+            for (int m, k = 0; k < 4; k += m)
+                m = sender.GetStream().Read(lbuf, k, 4-k);
+                
+            int len = BitConverter.ToInt32(lbuf, 0);
+
+            byte[] bytes = new byte[len];
+            for (int m, k = 0; k < len; k += m)
+                m = sender.GetStream().Read(bytes, k, len-k);
+            
+            return bytes;
+        }
+
+        private void Handler(TcpClient client)
+        {
+            while (true)
+            {
+                byte[] tagBytes = _ReadBytes(client);
+                string tag = System.Text.Encoding.UTF8.GetString(tagBytes);  
+
+                if (tag == "quit")
+                    Application.Quit();
+                
+                byte[] msg = _ReadBytes(client);
+
+                lock(_messages)
+                {
+                    _messages[tag] = msg;
+                }
+            }
+        }
+
+        public void StartServer()
+        {
+            TcpListener listener = new(IPAddress.Any, _port);    
+            listener.Start();
+            TcpClient client = listener.AcceptTcpClient();
+            Task.Run(() => Handler(client));
+        }
+    }
+    [Serializable]
+    public class Master
+    {
+        public string host;
+        public string ip;
+        public float aspect;
+    };
+
+    [Serializable]
+    public class Dimensions
+    {
+        public int numTilesHeight;
+        public int numTilesWidth;
+        public int screenWidth;
+        public int screenHeight;
+        public int mullionHeight;
+        public int mullionWidth;
+        public bool fullScreen;
+        public float aspect;
+        public float scaling;
+
+    };
+
+    [Serializable]
+    public class Process
+    {
+        public string host;
+        public string ip;
+        public int x;
+        public int y;
+        public int i;
+        public int j;
+    };
+
+    [Serializable]
+    public class  Wall
+    {
+        public Master master;  
+        public Dimensions dimensions;
+        public Process[] processes;
+    };
+
     private bool initialized = false;
-    
     public static TiledDisplayManager Instance { get; private set; }
-
-    public string configFile = "./configuration.xml";
     public bool isMaster = true;
-
-    MySocket up = null;
-
-    List<MySocket> child_sockets = new List<MySocket>();
+    public MessageManager messageManager = null;
 
     int numProcesses = -1;
     int myRank = 0;
     float left, right, top, bottom, aspect;
 
     float wall_scaling = 1;
-
-    [Serializable]
-    public class dimensions
-    {
-        [XmlAttribute] public string numTilesWidth;
-        [XmlAttribute] public string numTilesHeight;
-        [XmlAttribute] public string screenWidth;
-        [XmlAttribute] public string screenHeight;
-        [XmlAttribute] public string mullionWidth;
-        [XmlAttribute] public string mullionHeight;
-        [XmlAttribute] public string fullscreen;
-        [XmlAttribute] public string aspect;
-
-        [XmlAttribute] public float wall_scaling;
-    }
 
     int numberOfTiles = 0;  
 
@@ -135,36 +227,6 @@ public class TiledDisplayManager : ScriptableObject
     public float WallScaling()
     {
         return Instance.wall_scaling;
-    }
-
-    [Serializable]
-    public class process
-    {
-        [XmlAttribute] public string host;
-        [XmlAttribute] public string ip;
-        [XmlAttribute] public string display;
-        [XmlAttribute] public string port;
-        [XmlAttribute] public string x;
-        [XmlAttribute] public string y;
-        [XmlAttribute] public string i;
-        [XmlAttribute] public string j;
-    }
-
-    [Serializable]
-    public class master
-    {
-        [XmlAttribute] public string host;
-        [XmlAttribute] public string aspect;
-        [XmlAttribute] public string display;
-        [XmlAttribute] public string ip;
-    }
-
-    [XmlRoot("tile_configuration")]
-    public class tile_configuration
-    {
-        [XmlElement] public dimensions dimensions;
-        [XmlElement] public master master;
-        [XmlArray] public process[] processes;
     }
 
     public float GetWallScaling()
@@ -205,13 +267,9 @@ public class TiledDisplayManager : ScriptableObject
         Configurator cfg = ScriptableObject.CreateInstance<Configurator>();
 
         string wallConfigFileName;
-        if (! cfg.GetString("wallConfig", out wallConfigFileName))
+        if (! cfg.GetString("-wallConfig", out wallConfigFileName))
         {
-            string home = System.Environment.GetEnvironmentVariable("USERPROFILE");
-            if (home == null)
-                home = System.Environment.GetEnvironmentVariable("HOME");
-            Debug.Log("HOME is " + home);
-            wallConfigFileName = Path.Combine(home, "wall.xml");
+            wallConfigFileName = string.Format("{0}/wall.json", ABREngine.Instance.Config.abr_root);
         }
 
         if (! File.Exists(wallConfigFileName))
@@ -220,14 +278,14 @@ public class TiledDisplayManager : ScriptableObject
             return;
         }
 
-        tile_configuration container = null;
+        Wall container = new();
     
         try
         {
-            var serializer = new XmlSerializer(typeof(tile_configuration));
-            var stream = new FileStream(wallConfigFileName, FileMode.Open);
-            container = serializer.Deserialize(stream) as tile_configuration;
-            stream.Close();   
+            StreamReader sr = new(wallConfigFileName);
+            string json = sr.ReadToEnd();
+            container = JsonUtility.FromJson<Wall>(json);
+            sr.Close();
         }
         catch(Exception e)
         {
@@ -235,13 +293,11 @@ public class TiledDisplayManager : ScriptableObject
             Application.Quit();
         }
 
-
         List<string> hosts = new List<string>();
         var master = (container.master.ip == null) ? container.master.host : container.master.ip;
         hosts.Add(master);
 
-
-        foreach (process p in container.processes)
+        foreach (Process p in container.processes)
             hosts.Add((p.ip == null) ? p.host : p.ip);
 
         numProcesses = hosts.Count;
@@ -258,9 +314,7 @@ public class TiledDisplayManager : ScriptableObject
             Debug.Log("Acting as master");
             var aspect_string = container.master.aspect;
 
-            var parts = aspect_string.Split(':');
-            aspect = (float)(Convert.ToDouble(parts[0]) / Convert.ToDouble(parts[1]));
-
+            aspect = container.master.aspect;
             left = -aspect / 2;
             right = aspect / 2;
             bottom = -0.5F;
@@ -269,26 +323,36 @@ public class TiledDisplayManager : ScriptableObject
         else
         {
             Debug.Log("Acting as worker");
+        
+            // Turn off GUI elements
+            GameObject gui = GameObject.Find("GUI");
+            if (gui != null)
+                gui.SetActive(false);
+
             var aspect_string = container.dimensions.aspect;
-            var parts = aspect_string.Split(':');
-            aspect = (float)(Convert.ToDouble(parts[0]) / Convert.ToDouble(parts[1]));
+            aspect = container.dimensions.aspect;
+            wall_scaling = container.dimensions.scaling;
 
-            wall_scaling = container.dimensions.wall_scaling;
+            var nth = container.dimensions.numTilesHeight;
+            if (nth == 0) nth = 1;
 
-            var ch = Convert.ToDouble(container.dimensions.numTilesHeight) / 2.0F;
-            var cw = Convert.ToDouble(container.dimensions.numTilesWidth) / 2.0F;
+            var ntw = Convert.ToDouble(container.dimensions.numTilesWidth);
+            if (ntw ==  0) ntw = 1;
+
+            var ch = nth / 2.0F;
+            var cw = ntw / 2.0F;
 
             int knt = 1;
             bool found = false;
-            foreach (process p in container.processes)
+            foreach (Process p in container.processes)
             {
                 string aa = p.host;
 
                 if (me == aa)
                 {
-                    left = (float)((Convert.ToDouble(p.i) - cw) * aspect);
+                    left = (float)((p.i - cw) * aspect);
                     right = left + aspect;
-                    bottom = (float)((ch - 1) - (Convert.ToDouble(p.j)) * 1.0F);
+                    bottom = (float)((ch - 1) - (p.j) * 1.0F);
                     top = bottom + 1;
                     myRank = knt;
                     found = true;
@@ -305,51 +369,57 @@ public class TiledDisplayManager : ScriptableObject
             }
         }
 
+        messageManager = new MessageManager(1901);
+
         if (myRank > 0 && (numProcesses > 1))
         {
             Debug.Log("opening UP socket and waiting...");
-            up = new MySocket();
+            messageManager.StartServer();
             Debug.Log("UP connected");
         }
         else
         {
             for (int i = 1; i < numProcesses; i++)
             {
-                MySocket skt = new MySocket(hosts[i]);
-                child_sockets.Add(skt);
+                messageManager.AddRecipient(hosts[i]);
+                Debug.Log("connected to " + hosts[i]);
             }
         }
     }
+    
+    static float lastTime = -999999.0f;
 
-    public void Communicate(ref byte[] serialized_message)
+    void Update()
     {
-        Instance._Communicate(ref serialized_message);
-    }
-
-    private void _Communicate(ref byte[] serialized_message)
-    {
-        byte[] szBytes = new byte[4];
-        int sz = 0;
-
-        if (isMaster)
-        {
-            szBytes = BitConverter.GetBytes((Int32)serialized_message.Length);
-            foreach (MySocket skt in child_sockets)
+        if (Instance.IsMaster())
+        {   
+            if (Input.GetKeyDown(KeyCode.Q))
             {
-                skt.Send(szBytes);
-                skt.Send(serialized_message);
-            }
+                if (NumberOfTiles() > 0)
+                    messageManager.SendMessage("quit");
 
-            foreach (MySocket skt in child_sockets)
-                skt.Receive(ref szBytes);
-        }
+                Application.Quit();
+            }
+    
+            if (NumberOfTiles() == 0)
+                return;
+
+            float time = ABREngine.Instance.GetCurrentTime();
+            if (time != lastTime)
+            {
+                byte[] bytes = BitConverter.GetBytes(time);
+                messageManager.SendMessage("CurrentTime", bytes);
+                lastTime = time;
+            }
+       }
         else
         {
-            up.Receive(ref szBytes);
-            sz = BitConverter.ToInt32(szBytes);
-            serialized_message = new byte[sz];
-            up.Receive(ref serialized_message);
-            up.Send(szBytes);
+            byte[] bytes = messageManager.GetMessage("CurrentTime");
+            if (bytes != null)
+            {
+                float time = BitConverter.ToSingle(bytes);
+                ABREngine.Instance.SetCurrentTime(time);
+            }
         }
     }
     

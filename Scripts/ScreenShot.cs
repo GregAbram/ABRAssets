@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using Unity.VisualScripting;
 using UnityEngine;
+using IVLab.ABREngine;
 
 public class ScreenShot : MonoBehaviour
 {
@@ -13,6 +14,7 @@ public class ScreenShot : MonoBehaviour
     void Start()
     {
         Configurator cfg = ScriptableObject.CreateInstance<Configurator>();
+
         if (!cfg.GetString("-screenshotCache", out screenshot_cache))
             screenshot_cache = "screenshots";
 
@@ -35,26 +37,26 @@ public class ScreenShot : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.S))
-            {
-                int multiplier;
+        if (Input.GetKeyDown(KeyCode.S) && screenshot_cache != "")
+        {
+            int multiplier;
 
-                string s;
-                Configurator cfg = ScriptableObject.CreateInstance<Configurator>();
+            string s;
+            Configurator cfg = ScriptableObject.CreateInstance<Configurator>();
 
-                if (cfg.GetString("-screenshotMultiplier", out s))
-                    int.TryParse(s, out multiplier);
-                else
-                    multiplier = 2;
+            if (cfg.GetString("-screenshotMultiplier", out s))
+                int.TryParse(s, out multiplier);
+            else
+                multiplier = 2;
 
-                string filename = string.Format(screenshot_template, shotCount);
+            string filename = string.Format(screenshot_template, DateTime.Now.ToString("MM-dd-yyyy-h-mm-tt"));
 
-                if (screenshot_cache != "")
-                    filename = screenshot_cache + "/" + filename;
+            if (screenshot_cache != "")
+                filename = screenshot_cache + "/" + filename;
 
-                Debug.Log("Saving " + filename);
-                ScreenCapture.CaptureScreenshot(filename, multiplier);
-                shotCount = shotCount + 1;
-            }
+            Debug.Log("Saving " + filename);
+            ScreenCapture.CaptureScreenshot(filename, multiplier);
+            shotCount = shotCount + 1;
+        }
     }
 }

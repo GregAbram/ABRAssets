@@ -1,24 +1,21 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
+
 using System.IO;
 using UnityEngine;
-using UnityEngine.InputSystem.LowLevel;
+using UnityEngine.EventSystems;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.Diagnostics.Tracing;
-using UnityEngine.UIElements;
-using UnityEngine.AI;
+using IVLab.ABREngine;
 
 public class CameraModel : MonoBehaviour
 {
+    public string message_tag = "camera model";
+    public string cache_name = "world";
     public int button = 0;
     public float mouseRotationSensitivity = .1f;
     public float mouseMovementSensitivity = 2f;
     protected Vector3 lastPosition;
     protected bool mouseIsDown = false;
-    protected bool saveState = false;
-    protected bool moved = false;
-    string cameraFile = "";
+    string cameraFile = "camera";
 
     TiledDisplayManager tdm = null;
 
@@ -49,25 +46,34 @@ public class CameraModel : MonoBehaviour
 
         var json = JsonUtility.ToJson(cState);
 
-        if (File.Exists(cameraFile))
+        try
         {
-            var fn = File.AppendText(cameraFile);
-            fn.Write(json);
-            fn.Write("\n");
-            fn.Close();
+            if (File.Exists(cameraFile))
+            {
+                var fn = File.AppendText(cameraFile);
+                fn.Write(json);
+                fn.Write("\n");
+                fn.Close();
+            }
+            else
+            {
+                var fn = File.CreateText(cameraFile);
+                fn.Write(json);
+                fn.Write("\n");
+                fn.Close();                
+            }
         }
-        else
+        catch (Exception e)
         {
-            var fn = File.CreateText(cameraFile);
-            fn.Write(json);
-            fn.Write("\n");
-            fn.Close();
+            Debug.Log("Cannot create or write camera transform history file " + cameraFile);
         }
     }
 
+    static bool first = true;
+
     public virtual void Start()
     {
-        tdm = ScriptableObject.CreateInstance<TiledDisplayManager>();
+        tdm = TiledDisplayManager.Instance;
         if (! tdm.IsMaster())
         {   
             float l, r, t, b;
@@ -77,10 +83,29 @@ public class CameraModel : MonoBehaviour
 
             Camera cam = GetComponent<Camera>(); 
             cam.projectionMatrix = PerspectiveOffCenter(ws * l, ws * r, ws * b, ws * t, cam.nearClipPlane, cam.farClipPlane);
+#if false
+            for (var i = 0; i < 4; i++)
+                Debug.LogFormat("M{0} {1} {2} {3} {4}", i, 
+                    cam.projectionMatrix[i, 0],
+                    cam.projectionMatrix[i, 1],
+                    cam.projectionMatrix[i, 2],
+                    cam.projectionMatrix[i, 3]);
+#endif
             return;
         }
-      
-        string transformCache;
+        else if (first)
+        {
+            first = false;
+            Camera cam = GetComponent<Camera>(); 
+#if false
+            for (var i = 0; i < 4; i++)
+                Debug.LogFormat("M{0} {1} {2} {3} {4}", i, 
+                    cam.projectionMatrix[i, 0],
+                    cam.projectionMatrix[i, 1],
+                    cam.projectionMatrix[i, 2],
+                    cam.projectionMatrix[i, 3]);
+#endif 
+        }
 
         Configurator cfg = ScriptableObject.CreateInstance<Configurator>();
 
@@ -109,56 +134,105 @@ public class CameraModel : MonoBehaviour
                     transform.rotation = cState.R;
                 } 
             }
+	}
+
+        string s;
+        if (cfg.GetString("-mouseRotationSensitivity", out s))
+        {
+            mouseRotationSensitivity = Convert.ToSingle(s);
         }
+        
+        if (cfg.GetString("-transformCache", out s))
+        {
+
+            string dirName = string.Format("{0}/{1}", ABREngine.Instance.Config.abr_root, s);
+
+            if (! Directory.Exists(dirName))
+            {
+                Debug.LogFormat("Transforms directory {0} does not exist", dirName);
+                cameraFile = "";
+            }
+            else
+            {
+                try
+                {
+                    cameraFile = string.Format("{0}/{1}", dirName, cameraFile);
+                    if (File.Exists(cameraFile))
+                    {
+                        string[] transforms = System.IO.File.ReadAllLines(cameraFile);
+
+                        if (transforms.Length > 0)
+                        {
+                            string json = transforms[transforms.Length - 1];
+                            CState cState = JsonUtility.FromJson<CState>(json);
+
+                            transform.position = cState.P;
+                            transform.rotation = cState.R;
+                        } 
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogFormat("Unable to create  transform file {0}", cameraFile);
+                    cameraFile = "";
+                }
+            }
+        } 
     }
 
-    public virtual void CameraController()
+    public virtual bool CameraController()
     {
+        bool save = false;
+
         if (Input.GetMouseButtonDown(button))
         {
             lastPosition = Input.mousePosition;
             mouseIsDown = true;
-            moved = false;
-            saveState = false;
+
         }
         else if (mouseIsDown)
         {
-            moved = true;
-
             Vector3 currentPosition = Input.mousePosition;
             Vector3 deltaPosition = currentPosition - lastPosition;
 
             float inputX = deltaPosition.x * mouseRotationSensitivity;
             float inputY = deltaPosition.y * mouseRotationSensitivity;
 
-            Quaternion q_r, q_u;
+            if (inputX != 0 || inputY != 0)
+            {
+                Quaternion q_r, q_u;
 
-            q_r = Quaternion.AngleAxis(inputY, Camera.main.transform.right);
-            q_u = Quaternion.AngleAxis(-inputX, Camera.main.transform.up);
+                q_r = Quaternion.AngleAxis(inputY, Camera.main.transform.right);
+                q_u = Quaternion.AngleAxis(-inputX, Camera.main.transform.up);
 
-            transform.rotation = q_r * q_u * transform.rotation;
+                transform.rotation = q_r * q_u * transform.rotation;              
+            }
         }
             
         float inputSW = Input.GetAxis("Mouse ScrollWheel") * mouseMovementSensitivity;
         if (inputSW != 0)
         {
             transform.position += inputSW * transform.forward;
-            moved = true;
+            save = true;
         }
 
         if (Input.GetMouseButtonUp(button))
         {
             mouseIsDown = false;
-            saveState = moved;
+            save = true;
         }
+
+        return save;
     }
 
     void Update()
     {
-        if (tdm.IsMaster())
-        {        
-            CameraController();
+        if (EventSystem.current.IsPointerOverGameObject())
+            return;
 
+        if (tdm.IsMaster())
+        {               
+            bool saveState = CameraController();
             if (saveState)
             {
                 SaveState();
@@ -186,34 +260,35 @@ public class CameraModel : MonoBehaviour
                 fmt.Serialize(ms, cv);
                 byte[] message = ms.ToArray();
 
-                tdm.Communicate(ref message);
+                tdm.messageManager.SendMessage(message_tag, message);
+#if false
+                Debug.LogFormat("CAM {0} {1} {2} {3} {4} {5} {6}", p.x, p.y, p.z, r.x, r.y, r.z, r.w);
+#endif
             }
         }
         else
         {
-            CurrentView cv;
-            var ms = new MemoryStream();
-            var fmt = new BinaryFormatter();
+            byte[] currentViewMessage = tdm.messageManager.GetMessage(message_tag);
+            if (currentViewMessage != null)
+            {
+                var ms = new MemoryStream(currentViewMessage);
+                var fmt = new BinaryFormatter();
+                CurrentView cv = (CurrentView)fmt.Deserialize(ms);
 
-            byte[] message = null;
-            tdm.Communicate(ref message);
+                Vector3 p = new Vector3(cv.px, cv.py, cv.pz);
+                Quaternion r = new Quaternion(cv.rx, cv.ry, cv.rz, cv.rw);
+#if false
 
-            ms = new MemoryStream(message);
-            cv = (CurrentView)fmt.Deserialize(ms);
-
-            //Debug.Log("Camera received " + cv.px + " " + cv.py + " " + cv.pz + " " + cv.rx + " " + cv.ry + " " + cv.rz + " " + cv.rw);
-
-
-            Vector3 p = new Vector3(cv.px, cv.py, cv.pz);
-            Quaternion r = new Quaternion(cv.rx, cv.ry, cv.rz, cv.rw);
-
-            transform.SetPositionAndRotation(p, r);
+                Debug.LogFormat("CAM {0} {1} {2} {3} {4} {5} {6}", p.x, p.y, p.z, r.x, r.y, r.z, r.w);
+#endif
+                transform.SetPositionAndRotation(p, r);
+            }
         }
     }
 
     static Matrix4x4 PerspectiveOffCenter(float left, float right, float bottom, float top, float near, float far)
     {
-        //Debug.Log("OC " + left + " " + right + " " + bottom + " " + top);
+        Debug.Log("OC " + left + " " + right + " " + bottom + " " + top);
         float x = 2.0F * near / (right - left);
         float y = 2.0F * near / (top - bottom);
         float a = (right + left) / (right - left);
@@ -240,7 +315,5 @@ public class CameraModel : MonoBehaviour
         m[3, 3] = 0;
         return m;
     }
-
-
 }
 

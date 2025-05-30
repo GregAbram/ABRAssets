@@ -1,21 +1,19 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.IO;
-using TMPro;
 using UnityEngine;
-using UnityEngine.InputSystem.LowLevel;
 using System.Runtime.Serialization.Formatters.Binary;
-using UnityEngine.Accessibility;
+using UnityEngine.EventSystems;
+using IVLab.ABREngine;
 
 
 public class WorldRotation : MonoBehaviour
 {
+    public string message_tag = "world rotation";
     public int button = 1;
     public float worldRotationSensitivity = 2f;
     Vector3 lastPosition;
     bool mouseIsDown = false;
-    string worldFile = ""; 
+    public string worldFile = "world"; 
 
     Camera mainCamera;
 
@@ -36,10 +34,8 @@ public class WorldRotation : MonoBehaviour
 
     void Start()
     {
-        tdm = ScriptableObject.CreateInstance<TiledDisplayManager>();
+        tdm = TiledDisplayManager.Instance;
         mainCamera = Camera.main;
-
-        string transformCache;
 
         Configurator cfg = ScriptableObject.CreateInstance<Configurator>();
 
@@ -83,23 +79,35 @@ public class WorldRotation : MonoBehaviour
 
         var json = JsonUtility.ToJson(worldState);
 
-        if (File.Exists(worldFile))
+        try
         {
-            var fn = File.AppendText(worldFile);
-            fn.Write(json);
-            fn.Write("\n");
-            fn.Close();
-        }
-        else
+            if (File.Exists(worldFile))
+            {
+                var fn = File.AppendText(worldFile);
+                fn.Write(json);
+                fn.Write("\n");
+                fn.Close();
+            }
+            else
+            {
+                var fn = File.CreateText(worldFile);
+                fn.Write(json);
+                fn.Write("\n");
+                fn.Close();
+            }            
+        }            
+        catch (Exception e)
         {
-            var fn = File.CreateText(worldFile);
-            fn.Write(json);
-            fn.Write("\n");
-            fn.Close();
+            Debug.Log("Cannot create or write world transform history file " + worldFile);
         }
     }
     void Update()
     {
+        if (EventSystem.current.IsPointerOverGameObject())
+            return;
+
+        bool changed = false;
+
 		if (tdm.IsMaster())
 		{   
 			if (Input.GetMouseButtonDown(button))
@@ -115,16 +123,21 @@ public class WorldRotation : MonoBehaviour
 				float inputX = deltaPosition.x * worldRotationSensitivity;
 				float inputY = deltaPosition.y * worldRotationSensitivity;
 
-                Quaternion q_r, q_u;
+                if (inputX != 0 || inputY != 0)
+                {
+                    changed = true;
+                    
+                    Quaternion q_r, q_u;
 
-                if(Input.GetKey("space"))
-                    q_r = Quaternion.AngleAxis(inputY, mainCamera.transform.forward);
-                else
-                    q_r = Quaternion.AngleAxis(inputY, mainCamera.transform.right);
+                    if(Input.GetKey("space"))
+                        q_r = Quaternion.AngleAxis(inputY, mainCamera.transform.forward);
+                    else
+                        q_r = Quaternion.AngleAxis(inputY, mainCamera.transform.right);
 
-                q_u = Quaternion.AngleAxis(-inputX, mainCamera.transform.up);
+                    q_u = Quaternion.AngleAxis(-inputX, mainCamera.transform.up);
 
-                transform.rotation = q_r * q_u * transform.rotation;
+                    transform.rotation = q_r * q_u * transform.rotation;
+                }
 
 				lastPosition = currentPosition;
 			}
@@ -135,7 +148,7 @@ public class WorldRotation : MonoBehaviour
 				saveState();
 			}
 
-			if (tdm.NumberOfTiles() > 0)
+			if (changed && tdm.NumberOfTiles() > 0)
             {
                 WorldTransform wx = new WorldTransform();
                 var fmt = new BinaryFormatter();
@@ -153,33 +166,25 @@ public class WorldRotation : MonoBehaviour
                 wx.rz = r.z;
                 wx.rw = r.w;
 
-                //Debug.Log("World sent " + wx.px + " " + wx.py + " " + wx.pz + " " + wx.rx + " " + wx.ry + " " + wx.rz + " " + wx.rw);
-
                 fmt.Serialize(ms, wx);
                 byte[] message = ms.ToArray();
-
-                //Debug.Log("Sending Message " + message.Length + " " + message.ToString());
-
-                tdm.Communicate(ref message);
-
+                tdm.messageManager.SendMessage(message_tag, message);
             }	
 		} 
 		else
 		{
-            WorldTransform wx;
-            var ms = new MemoryStream();
-            var fmt = new BinaryFormatter();
-            
-			byte[] message = null;
-			tdm.Communicate(ref message);
+            byte[] worldRotationMessaage = tdm.messageManager.GetMessage(message_tag);
+            if (worldRotationMessaage != null)
+            {
+                var fmt = new BinaryFormatter();
+                var ms = new MemoryStream(worldRotationMessaage);
+                WorldTransform wx = (WorldTransform)fmt.Deserialize(ms);
 
-            ms = new MemoryStream(message);
-            wx = (WorldTransform)fmt.Deserialize(ms);
+                Vector3 p = new Vector3(wx.px, wx.py, wx.pz);
+                Quaternion r = new Quaternion(wx.rx, wx.ry, wx.rz, wx.rw);
 
-            Vector3 p = new Vector3(wx.px, wx.py, wx.pz);
-            Quaternion r = new Quaternion(wx.rx, wx.ry, wx.rz, wx.rw);
-
-            transform.SetPositionAndRotation(p, r);
+                transform.SetPositionAndRotation(p, r);
+            }
 		}
 	}
 }
