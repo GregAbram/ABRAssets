@@ -5,6 +5,8 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using System.Runtime.Serialization.Formatters.Binary;
 using IVLab.ABREngine;
+using UnityEngine.XR.Interaction.Toolkit.Locomotion;
+using System.Runtime.InteropServices;
 
 public class CameraModel : MonoBehaviour
 {
@@ -20,6 +22,10 @@ public class CameraModel : MonoBehaviour
     TiledDisplayManager tdm = null;
 
     bool cacheCamera = false;
+
+    Vector3 setPosition;
+    Quaternion setRotation;
+
 
     [Serializable] 
     class CState
@@ -63,7 +69,7 @@ public class CameraModel : MonoBehaviour
                 fn.Close();                
             }
         }
-        catch (Exception e)
+        catch
         {
             Debug.Log("Cannot create or write camera transform history file " + cameraFile);
         }
@@ -73,6 +79,8 @@ public class CameraModel : MonoBehaviour
 
     public virtual void Start()
     {
+        File.AppendAllText("C:/Users/gda/debug.txt", "CameraModel Start\n");
+
         tdm = TiledDisplayManager.Instance;
         if (! tdm.IsMaster())
         {   
@@ -132,6 +140,9 @@ public class CameraModel : MonoBehaviour
 
                     transform.position = cState.P;
                     transform.rotation = cState.R;
+
+                    setPosition = cState.P;
+                    setRotation = cState.R;
                 }
             }
         }
@@ -200,7 +211,19 @@ public class CameraModel : MonoBehaviour
             return;
 
         if (tdm.IsMaster())
-        {               
+        {
+            if (Input.GetKeyDown(KeyCode.S))
+            {
+                transform.GetPositionAndRotation(out setPosition, out setRotation);
+                return;
+            }
+            else if (Input.GetKeyDown(KeyCode.R))
+            {
+                transform.position = setPosition;
+                transform.rotation = setRotation;
+                return;
+            }
+
             bool saveState = CameraController();
             if (saveState)
             {

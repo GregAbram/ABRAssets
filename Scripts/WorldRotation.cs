@@ -98,7 +98,7 @@ public class WorldRotation : MonoBehaviour
                 fn.Close();
             }            
         }            
-        catch (Exception e)
+        catch
         {
             Debug.Log("Cannot create or write world transform history file " + worldFile);
         }

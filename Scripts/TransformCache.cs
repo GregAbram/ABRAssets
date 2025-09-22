@@ -22,6 +22,9 @@ public class TransformCache : MonoBehaviour
 
     void Start()
     {
+        File.AppendAllText("C:/Users/gda/debug.txt", "CameraModel Start");
+
+
         Configurator cfg = ScriptableObject.CreateInstance<Configurator>();
         if (! cfg.GetString("-transformCache", out transformCache))
             transformCache = ".";

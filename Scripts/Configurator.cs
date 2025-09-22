@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using System.IO;
-using System.Linq;
+using System.Linq; 
 using Unity.VisualScripting;
 using UnityEngine.Rendering;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 public class Configurator : ScriptableObject
 {
@@ -14,7 +16,8 @@ public class Configurator : ScriptableObject
     private Dictionary<string, string> cfg = new Dictionary<string, string>();
 
     private void Awake()
-    {   
+    {
+
         if (Instance != null && Instance != this)
         {
             return;
@@ -32,9 +35,9 @@ public class Configurator : ScriptableObject
                 Debug.Log("command line error");
                 break;
             }
-            else 
+            else
             {
-                cfg[args[i]] = args[i+1];
+                cfg[args[i]] = args[i + 1];
             }
         }
 
@@ -47,20 +50,19 @@ public class Configurator : ScriptableObject
             if (envDir != null)
                 envDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         }
-     
-        string cfgFile = Path.Combine(envDir, "svis.cfg");
 
         try
         {
-            using (StreamReader reader = new StreamReader(cfgFile))
+            string cfgFile = Path.Combine(envDir, "svis.json");
+
+            using (StreamReader sr = new(cfgFile))
             {
-                string line;
-                while ((line = reader.ReadLine()) != null)
+                string jsonString = sr.ReadToEnd();
+                var jsonObject = JObject.Parse(jsonString);
+                Dictionary<string, string> dictObj = jsonObject.ToObject<Dictionary<string, string>>();
+                foreach (var key in dictObj.Keys)
                 {
-                    string[] parts = line.Split(':', 2);
-                    Debug.Log(line + " : X" + parts);
-                    if (parts.Length == 2)
-                        cfg['-' + parts[0]] = parts[1].Trim();
+                    cfg[key] = dictObj[key];
                 }
             }
         }

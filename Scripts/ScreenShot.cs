@@ -37,7 +37,7 @@ public class ScreenShot : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.S) && screenshot_cache != "")
+        if (Input.GetKeyDown(KeyCode.A) && screenshot_cache != "")
         {
             int multiplier;
 

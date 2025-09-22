@@ -42,9 +42,10 @@ public class LookMove : CameraModel
 			if (inputX != 0 || inputY != 0)
 			{
 				Quaternion q_r, q_u;
-            	q_r = Quaternion.AngleAxis(inputY, Camera.main.transform.right);
-            	q_u = Quaternion.AngleAxis(-inputX, Camera.main.transform.up);
-            	transform.rotation = q_r * q_u * transform.rotation;
+				q_r = Quaternion.AngleAxis(inputY, Camera.main.transform.right);
+				q_u = Quaternion.AngleAxis(-inputX, Camera.main.transform.up);
+				transform.rotation = q_r * q_u * transform.rotation;
+				transform.rotation = Quaternion.LookRotation(transform.forward, Vector3.up);
 			}
 		}
 

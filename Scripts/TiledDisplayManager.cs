@@ -261,10 +261,13 @@ public class TiledDisplayManager : MonoBehaviour
 
     private void Initialize()
     {
+        File.AppendAllText("C:/Users/gda/debug.txt", "TDM Start\n");
+
         if (initialized) return;
         initialized = true;
 
         Configurator cfg = ScriptableObject.CreateInstance<Configurator>();
+        File.AppendAllText("C:/Users/gda/debug.txt", "TDM got configurator\n");
 
         string wallConfigFileName;
         if (!cfg.GetString("-wallConfig", out wallConfigFileName))
@@ -280,16 +283,20 @@ public class TiledDisplayManager : MonoBehaviour
             envDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
 
-        wallConfigFileName = string.Format("{0}/{1}}", envDir, wallConfigFileName);
+        wallConfigFileName = string.Format("{0}/{1}", envDir, wallConfigFileName);
 
-        if (! File.Exists(wallConfigFileName))
+        if (!File.Exists(wallConfigFileName))
         {
             isMaster = true;
+            File.AppendAllText("C:/Users/gda/debug.txt", "No wall config\n");
+
             return;
         }
 
+        File.AppendAllText("C:/Users/gda/debug.txt", String.Format("got wall config ({0}\n", wallConfigFileName));
+
         Wall container = new();
-    
+
         try
         {
             StreamReader sr = new(wallConfigFileName);
@@ -297,7 +304,7 @@ public class TiledDisplayManager : MonoBehaviour
             container = JsonUtility.FromJson<Wall>(json);
             sr.Close();
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             Debug.Log(e.Message);
             Application.Quit();
@@ -314,10 +321,14 @@ public class TiledDisplayManager : MonoBehaviour
         numberOfTiles = hosts.Count - 1;
 
         string me = null;
-        if (! cfg.GetString("-hostname", out me))
+        if (!cfg.GetString("-hostname", out me))
             me = SystemInfo.deviceName.Split('.')[0];
 
         isMaster = me == container.master.host;
+        if (isMaster)
+            File.AppendAllText("C:/Users/gda/debug.txt", "I'm master\n");
+       else
+            File.AppendAllText("C:/Users/gda/debug.txt", "I'm master\n");
 
         if (isMaster)
         {
@@ -333,7 +344,7 @@ public class TiledDisplayManager : MonoBehaviour
         else
         {
             Debug.Log("Acting as worker");
-        
+
             // Turn off GUI elements
             GameObject gui = GameObject.Find("GUI");
             if (gui != null)
@@ -347,7 +358,7 @@ public class TiledDisplayManager : MonoBehaviour
             if (nth == 0) nth = 1;
 
             var ntw = Convert.ToDouble(container.dimensions.numTilesWidth);
-            if (ntw ==  0) ntw = 1;
+            if (ntw == 0) ntw = 1;
 
             var ch = nth / 2.0F;
             var cw = ntw / 2.0F;
@@ -380,6 +391,7 @@ public class TiledDisplayManager : MonoBehaviour
         }
 
         messageManager = new MessageManager(1901);
+        File.AppendAllText("C:/Users/gda/debug.txt", String.Format("Message managee READY rank {0} np {1}", myRank, numProcesses));
 
         if (myRank > 0 && (numProcesses > 1))
         {
@@ -395,6 +407,9 @@ public class TiledDisplayManager : MonoBehaviour
                 Debug.Log("connected to " + hosts[i]);
             }
         }
+        
+        //File.AppendAllText("C:/Users/gda/debug.txt", "TDM is  ready\n");
+
     }
     
     static float lastTime = -999999.0f;
