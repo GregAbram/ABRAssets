@@ -51,7 +51,7 @@ public class TiledDisplayManager : MonoBehaviour
         private int _port;
         private List<MessageRecipient> _recipients = new List<MessageRecipient>();
         private Dictionary<string, byte[]> _messages = new Dictionary<string, byte[]>();
-        public class MessageRecipient
+       public class MessageRecipient
         {
             NetworkStream _stream;
 
@@ -261,13 +261,12 @@ public class TiledDisplayManager : MonoBehaviour
 
     private void Initialize()
     {
-        File.AppendAllText("C:/Users/gda/debug.txt", "TDM Start\n");
+        Configurator cfg = ScriptableObject.CreateInstance<Configurator>();
+
+        cfg.Log("TDM Start\n");
 
         if (initialized) return;
         initialized = true;
-
-        Configurator cfg = ScriptableObject.CreateInstance<Configurator>();
-        File.AppendAllText("C:/Users/gda/debug.txt", "TDM got configurator\n");
 
         string wallConfigFileName;
         if (!cfg.GetString("-wallConfig", out wallConfigFileName))
@@ -288,12 +287,12 @@ public class TiledDisplayManager : MonoBehaviour
         if (!File.Exists(wallConfigFileName))
         {
             isMaster = true;
-            File.AppendAllText("C:/Users/gda/debug.txt", "No wall config\n");
+            cfg.Log("No wall config\n");
 
             return;
         }
 
-        File.AppendAllText("C:/Users/gda/debug.txt", String.Format("got wall config ({0}\n", wallConfigFileName));
+        cfg.Log(String.Format("got wall config ({0}\n", wallConfigFileName));
 
         Wall container = new();
 
@@ -326,9 +325,9 @@ public class TiledDisplayManager : MonoBehaviour
 
         isMaster = me == container.master.host;
         if (isMaster)
-            File.AppendAllText("C:/Users/gda/debug.txt", "I'm master\n");
+            cfg.Log("I'm master\n");
        else
-            File.AppendAllText("C:/Users/gda/debug.txt", "I'm master\n");
+            cfg.Log("I'm NOT master\n");
 
         if (isMaster)
         {
@@ -391,7 +390,7 @@ public class TiledDisplayManager : MonoBehaviour
         }
 
         messageManager = new MessageManager(1901);
-        File.AppendAllText("C:/Users/gda/debug.txt", String.Format("Message managee READY rank {0} np {1}", myRank, numProcesses));
+        cfg.Log(String.Format("Message managee READY rank {0} np {1}", myRank, numProcesses));
 
         if (myRank > 0 && (numProcesses > 1))
         {
@@ -407,9 +406,6 @@ public class TiledDisplayManager : MonoBehaviour
                 Debug.Log("connected to " + hosts[i]);
             }
         }
-        
-        //File.AppendAllText("C:/Users/gda/debug.txt", "TDM is  ready\n");
-
     }
     
     static float lastTime = -999999.0f;

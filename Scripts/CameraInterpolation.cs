@@ -33,6 +33,8 @@ public class CameraInterpolation : MonoBehaviour
 
     string fileName;
 
+    Configurator cfg = null;
+
     void LoadKeyFrames()
     {
         keyFrames.Clear();
@@ -54,7 +56,7 @@ public class CameraInterpolation : MonoBehaviour
     void Start()
     {
 
-        Configurator cfg = ScriptableObject.CreateInstance<Configurator>();
+        cfg = ScriptableObject.CreateInstance<Configurator>();
 
         if (!cfg.GetString("-ABRConfig", out envDir))
             envDir = Environment.GetEnvironmentVariable("ABRConfig");
@@ -199,7 +201,7 @@ public class CameraInterpolation : MonoBehaviour
         if (System.IO.File.Exists(fileName))
             System.IO.File.Delete(fileName);
 
-        File.AppendAllText("C:/Users/gda/debug.txt", string.Format("Saving {0}\n", fileName));
+       cfg.Log(string.Format("Saving {0}\n", fileName));
 
         ScreenCapture.CaptureScreenshot(fileName, 2);
 
@@ -213,7 +215,7 @@ public class CameraInterpolation : MonoBehaviour
 #endif
         if (System.IO.File.Exists(fileName))
         {
-            File.AppendAllText("C:/Users/gda/debug.txt", string.Format("Saved {0}\n", fileName));
+            cfg.Log(string.Format("Saved {0}\n", fileName));
             frameNo = frameNo + 1;
         }
     }

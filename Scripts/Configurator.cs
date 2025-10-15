@@ -47,7 +47,7 @@ public class Configurator : ScriptableObject
         else
         {
             envDir = Environment.GetEnvironmentVariable("ABRConfig");
-            if (envDir != null)
+            if (envDir == null)
                 envDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         }
 
@@ -74,8 +74,8 @@ public class Configurator : ScriptableObject
  
     }
 
-    public bool GetString(string k, out string v) 
-    { 
+    public bool GetString(string k, out string v)
+    {
         if (Instance.cfg.ContainsKey(k))
         {
             v = Instance.cfg[k];
@@ -83,9 +83,17 @@ public class Configurator : ScriptableObject
         }
         else
         {
-            v = "none";           
+            v = "none";
             return false;
         }
+    }
+    
+    public void Log(string msg)
+    {
+        if (Instance.cfg.ContainsKey("-logFile"))
+            File.AppendAllText(Instance.cfg["-logFile"], msg);
+        else
+            Debug.Log(msg);
     }
 
     public List<string> keys() { return Instance.cfg.Keys.ToList(); }

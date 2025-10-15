@@ -5,8 +5,10 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using System.Runtime.Serialization.Formatters.Binary;
 using IVLab.ABREngine;
-using UnityEngine.XR.Interaction.Toolkit.Locomotion;
+//using UnityEngine.XR.Interaction.Toolkit.Locomotion;
 using System.Runtime.InteropServices;
+using System.Diagnostics.Tracing;
+using Unity.VisualScripting;
 
 public class CameraModel : MonoBehaviour
 {
@@ -18,6 +20,7 @@ public class CameraModel : MonoBehaviour
     protected Vector3 lastPosition;
     protected bool mouseIsDown = false;
     string cameraFile = "camera";
+    Configurator cfg = null;
 
     TiledDisplayManager tdm = null;
 
@@ -79,7 +82,8 @@ public class CameraModel : MonoBehaviour
 
     public virtual void Start()
     {
-        File.AppendAllText("C:/Users/gda/debug.txt", "CameraModel Start\n");
+        cfg = ScriptableObject.CreateInstance<Configurator>();
+        cfg.Log("CameraModel Start\n");
 
         tdm = TiledDisplayManager.Instance;
         if (! tdm.IsMaster())
@@ -114,8 +118,6 @@ public class CameraModel : MonoBehaviour
                     cam.projectionMatrix[i, 3]);
 #endif 
         }
-
-        Configurator cfg = ScriptableObject.CreateInstance<Configurator>();
 
         if (cfg.GetString("-cameraCache", out cameraFile))
         {

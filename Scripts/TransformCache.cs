@@ -14,6 +14,8 @@ public class TransformCache : MonoBehaviour
     string filename = "";
     private float last_scrollwheel = 0;
 
+    Configurator cfg = null;
+
     [Serializable]
     public class Xform
     {
@@ -21,11 +23,10 @@ public class TransformCache : MonoBehaviour
     }
 
     void Start()
-    {
-        File.AppendAllText("C:/Users/gda/debug.txt", "CameraModel Start");
+    {        
+        cfg = ScriptableObject.CreateInstance<Configurator>();
+        cfg.Log("CameraModel Start");
 
-
-        Configurator cfg = ScriptableObject.CreateInstance<Configurator>();
         if (! cfg.GetString("-transformCache", out transformCache))
             transformCache = ".";
 
