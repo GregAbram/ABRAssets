@@ -160,6 +160,8 @@ public class CameraModel : MonoBehaviour
         {
             mouseRotationSensitivity = Convert.ToSingle(s);
         }
+
+        transform.GetPositionAndRotation(out setPosition, out setRotation);
     }
 
     public virtual bool CameraController()
