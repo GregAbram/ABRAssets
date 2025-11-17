@@ -263,8 +263,6 @@ public class TiledDisplayManager : MonoBehaviour
     {
         Configurator cfg = ScriptableObject.CreateInstance<Configurator>();
 
-        cfg.Log("TDM Start\n");
-
         if (initialized) return;
         initialized = true;
 

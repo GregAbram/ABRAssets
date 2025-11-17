@@ -83,7 +83,6 @@ public class CameraModel : MonoBehaviour
     public virtual void Start()
     {
         cfg = ScriptableObject.CreateInstance<Configurator>();
-        cfg.Log("CameraModel Start\n");
 
         tdm = TiledDisplayManager.Instance;
         if (! tdm.IsMaster())

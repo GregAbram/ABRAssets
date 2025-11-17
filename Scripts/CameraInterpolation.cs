@@ -175,6 +175,7 @@ public class CameraInterpolation : MonoBehaviour
 #else
             StartCoroutine(SaveFrame(frameNo));
 #endif
+            frameNo = frameNo + 1;
         }
     }
 

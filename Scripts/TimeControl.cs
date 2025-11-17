@@ -10,13 +10,12 @@ public class TimeControl : MonoBehaviour
     public int frame = 0;
     public int duration = 30;
     public bool running = false;
-    int fps = 30;
+    int fps = 166;
 
     public bool isRunning()  { return running; }
 
     void Start()
     {
-        Debug.Log("TimeControl::Start");
         ABREngine.Instance.SetScaleTime(0.0f);
 
         tLast = 0.0f;
