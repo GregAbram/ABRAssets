@@ -10,7 +10,7 @@ public class TimeControl : MonoBehaviour
     public int frame = 0;
     public int duration = 30;
     public bool running = false;
-    int fps = 166;
+    public int fps = 1;
 
     public bool isRunning()  { return running; }
 
