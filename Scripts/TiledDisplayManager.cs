@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Net.Http;
+using Unity.VisualScripting;
 // using IVLab.Utilities;
 
 // The communication pattern is that the Server processes messages from above and the MessageRecipients represent 
@@ -44,7 +45,8 @@ public class MessageRecipient
         SendBytes(bytes);
     }
 }
-public class TiledDisplayManager : MonoBehaviour
+
+public class TiledDisplayManager : ScriptableObject
 {
     public class MessageManager
     {
@@ -207,7 +209,32 @@ public class TiledDisplayManager : MonoBehaviour
     };
 
     private bool initialized = false;
-    public static TiledDisplayManager Instance { get; private set; }
+    public static TiledDisplayManager instance = null;
+
+    // Explicit static constructor to tell C# compiler
+    // not to mark type as beforefieldinit
+    static TiledDisplayManager()
+    {
+    }
+
+    private TiledDisplayManager()
+    {
+    }
+
+    public static TiledDisplayManager Instance
+    {
+        get
+        {
+                if (! instance)
+                {
+                    instance = new TiledDisplayManager();
+                    instance.Initialize();
+                }
+                
+                return instance;
+        }
+    }
+
     public bool isMaster = true;
     public MessageManager messageManager = null;
 
@@ -242,23 +269,16 @@ public class TiledDisplayManager : MonoBehaviour
     }
     public bool IsMaster()
     {
-        return Instance.isMaster;
+        return instance.isMaster;
     }
 
-    public TiledDisplayManager()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-    }
-
+#if false
     void OnEnable()
     {
-        if (! Instance.initialized)
-            Instance.Initialize();
+        if (! instance.initialized)
+            instance.Initialize();
     }
-
+#endif
     private void Initialize()
     {
         Configurator cfg = ScriptableObject.CreateInstance<Configurator>();
@@ -410,7 +430,7 @@ public class TiledDisplayManager : MonoBehaviour
 
     void Update()
     {
-        if (Instance.IsMaster())
+        if (instance.IsMaster())
         {   
             if (Input.GetKeyDown(KeyCode.Q))
             {
