@@ -227,7 +227,8 @@ public class TiledDisplayManager : ScriptableObject
         {
                 if (! instance)
                 {
-                    instance = new TiledDisplayManager();
+                    //instance = new TiledDisplayManager();
+                    instance = ScriptableObject.CreateInstance<TiledDisplayManager>();
                     instance.Initialize();
                 }
                 

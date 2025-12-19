@@ -1,3 +1,4 @@
+#if false
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
@@ -16,6 +17,7 @@ public class ABRPicker : MonoBehaviour
         public GameObject abrGameObject;
         public Guid guid;
         public int instanceId;
+        public RawDataset dataset;
     };
 
     public void Raycast()
@@ -24,8 +26,8 @@ public class ABRPicker : MonoBehaviour
         if (Physics.Raycast(ray, out RaycastHit hit))
         {
             ABRPick abrPick = new ABRPick();
-            abrPick.point = hit.point;
-         
+            abrPick.point = hit.point;        
+            
             GameObject abrGO = hit.collider.gameObject;
 
             if (abrGO.TryGetComponent<IVLab.ABREngine.InstanceId>(out IVLab.ABREngine.InstanceId pickId))
@@ -65,6 +67,22 @@ public class ABRPicker : MonoBehaviour
             }
 
             abrPick.guid = ego.Uuid;
+            
+            IDataImpression idi = ABREngine.Instance.GetDataImpression(ego.Uuid);
+            if (idi == null)
+            {
+                Debug.Log("No data impression found for pick");
+                return;
+            }
+
+            if (ABREngine.Instance.Data.TryGetRawDataset(idi.GetKeyData()?.Path, out abrPick.dataset))
+            {
+                Debug.Log("Picked dataset: " + abrPick.dataset.dataPath);
+            }
+            else
+            {
+                Debug.Log("Picked dataset not found");
+            }   
 
             foreach (GameObject listener in listeners)
             {
@@ -82,3 +100,4 @@ public class ABRPicker : MonoBehaviour
         }
     }
 }
+#endif

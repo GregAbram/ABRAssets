@@ -38,7 +38,6 @@ public class CameraInterpolation : MonoBehaviour
     void LoadKeyFrames()
     {
         keyFrames.Clear();
-        return;
         
         if (!File.Exists(fileName))
             UnityEngine.Debug.Log("No keyframes file\n");
