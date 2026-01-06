@@ -1,0 +1,15 @@
+{
+    "name": "TACC.ABRAssets.Runtime",
+    "references": [
+        "ABRAssets.ABRAssets"
+    ],
+    "includePlatforms": [
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
