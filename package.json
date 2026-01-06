@@ -1,6 +1,6 @@
 {
-  "name": "edu.tacc.abr.assets",
-  "displayName": "TACC ABR assets",
+  "name": "edu.tacc.abrassets",
+  "displayName": "ABRAssets",
   "version": "1.0.0",
   "unity": "2022.3",
   "author": { "name": "Greg Abram", "email": "gda@tacc.utexas.edu" },
