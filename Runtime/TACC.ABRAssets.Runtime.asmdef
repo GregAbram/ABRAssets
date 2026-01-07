@@ -2,7 +2,7 @@
     "name": "TACC.ABRAssets.Runtime",
     "references": [
         "ABRAssets.ABRAssets",
-        "IVLab"
+        "IVLab.IVLab"
     ],
     "includePlatforms": [
     ],
