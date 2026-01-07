@@ -169,11 +169,19 @@ public class CameraModel : MonoBehaviour
     {
         bool save = false;
 
+        bool b = Input.GetMouseButtonDown(button);
+        if (mouseIsDown && !b)
+        {
+            mouseIsDown = false;
+            saveState();
+            return;
+        }
+
         bool c = Input.GetKey(KeyCode.LeftControl);
         bool a = Input.GetKey(KeyCode.LeftAlt);
         bool s = Input.GetKey(KeyCode.LeftShift);
-        if (Input.GetMouseButtonDown(button) &&
-			(modifier == 'n' && !c && !a && !s) ||
+        if (b ||
+            (modifier == 'n' && !c && !a && !s) ||
             (modifier == 'c' && c) ||
             (modifier == 'a' && a) ||
             (modifier == 's' && s))

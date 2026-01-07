@@ -114,10 +114,18 @@ public class WorldRotation : MonoBehaviour
 
 		if (tdm.IsMaster())
 		{   
+            bool b = Input.GetMouseButtonDown(button);
+            if (mouseIsDown && !b)
+            {
+                mouseIsDown = false;
+                saveState();
+                return;
+            }
+
             bool c = Input.GetKey(KeyCode.LeftControl);
             bool a = Input.GetKey(KeyCode.LeftAlt);
             bool s = Input.GetKey(KeyCode.LeftShift);
-            if (Input.GetMouseButtonDown(button) &&
+            if (b ||
                 (modifier == 'n' && !c && !a && !s) ||
                 (modifier == 'c' && c) ||
                 (modifier == 'a' && a) ||
@@ -151,12 +159,6 @@ public class WorldRotation : MonoBehaviour
                 }
 
 				lastPosition = currentPosition;
-			}
-
-			if (Input.GetMouseButtonUp(button))
-			{
-				mouseIsDown = false;
-				saveState();
 			}
 
 			if (changed && tdm.NumberOfTiles() > 0)

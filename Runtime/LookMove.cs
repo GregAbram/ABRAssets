@@ -20,11 +20,19 @@ public class LookMove : CameraModel
 			save = true;
 		}
 
+        bool b = Input.GetMouseButtonDown(button);
+        if (mouseIsDown && !b)
+        {
+            mouseIsDown = false;
+            saveState();
+            return;
+        }
+
         bool c = Input.GetKey(KeyCode.LeftControl);
         bool a = Input.GetKey(KeyCode.LeftAlt);
         bool s = Input.GetKey(KeyCode.LeftShift);
-        if (Input.GetMouseButtonDown(button) &&
-			(modifier == 'n' && !c && !a && !s) ||
+        if (b ||
+            (modifier == 'n' && !c && !a && !s) ||
             (modifier == 'c' && c) ||
             (modifier == 'a' && a) ||
             (modifier == 's' && s))
@@ -32,12 +40,8 @@ public class LookMove : CameraModel
 	        mouseIsDown = true;
 			lastPosition = Input.mousePosition;
 		}
-		else if (Input.GetMouseButtonUp(button))   
-		{
-			mouseIsDown = false;
-			save = true;
-		}
-	   
+	
+	
 	    if (mouseIsDown)
 	    {
             Vector3 currentPosition = Input.mousePosition;
