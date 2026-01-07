@@ -25,7 +25,6 @@ public class LookMove : CameraModel
         bool b = Input.GetMouseButton(button);
         if (mouseIsDown && !b)
         {
-            //UnityEngine.Debug.Log("Mouse button released");
 			mouseIsDown = false;
             return true;
         }
@@ -43,12 +42,10 @@ public class LookMove : CameraModel
 			{
 				mouseIsDown = true;
 				lastPosition = Input.mousePosition;
-				UnityEngine.Debug.Log("Initial mouse button press");
 				return false;				
 			}
 			else
 			{
-				UnityEngine.Debug.Log("Mouse is down");
 				Vector3 currentPosition = Input.mousePosition;
 				Vector3 deltaPosition = currentPosition - lastPosition;
 				lastPosition = currentPosition;
@@ -62,10 +59,7 @@ public class LookMove : CameraModel
 					q_u = Quaternion.AngleAxis(-inputX, Camera.main.transform.up);
 					transform.rotation = q_r * q_u * transform.rotation;
 					transform.rotation = Quaternion.LookRotation(transform.forward, Vector3.up);
-				}
-				else
-				{
-					UnityEngine.Debug.Log("Not enough rotation input");
+					save = true;
 				}
 				
 				float inputSW = Input.GetAxis("Mouse ScrollWheel") * mouseMovementSensitivity;
