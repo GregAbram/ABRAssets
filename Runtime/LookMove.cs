@@ -20,10 +20,13 @@ public class LookMove : CameraModel
 			save = true;
 		}
 
+        bool c = Input.GetKey(KeyCode.LeftControl);
+        bool a = Input.GetKey(KeyCode.LeftAlt);
+        bool s = Input.GetKey(KeyCode.LeftShift);
         if (Input.GetMouseButtonDown(button) &&
-            (modifier == 'c' && Input.GetKey(KeyCode.LeftControl)) ||
-            (modifier == 'a' && Input.GetKey(KeyCode.LeftAlt)) ||
-            (modifier == 's' && Input.GetKey(KeyCode.LeftShift)))
+            (modifier == 'c' && c) ||
+            (modifier == 'a' && a) ||
+            (modifier == 's' && s))
 		{
 	        mouseIsDown = true;
 			lastPosition = Input.mousePosition;
