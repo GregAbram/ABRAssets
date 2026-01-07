@@ -10,6 +10,8 @@ public class WorldRotation : MonoBehaviour
 {
     public string message_tag = "world rotation";
     public int button = 1;
+    public char modifier = 'n'; // n = none, c = ctrl, a = alt, s = shift
+
     public float worldRotationSensitivity = 2f;
     Vector3 lastPosition;
     bool mouseIsDown = false;
@@ -112,7 +114,11 @@ public class WorldRotation : MonoBehaviour
 
 		if (tdm.IsMaster())
 		{   
-			if (Input.GetMouseButtonDown(button))
+			if (Input.GetMouseButtonDown(button) && 
+                (modifier == 'n' ||
+                (modifier == 'c' && Input.GetKey(KeyCode.LeftControl)) ||
+                (modifier == 'a' && Input.GetKey(KeyCode.LeftAlt)) ||
+                (modifier == 's' && Input.GetKey(KeyCode.LeftShift))))
 			{
 				lastPosition = Input.mousePosition;
 				mouseIsDown = true;

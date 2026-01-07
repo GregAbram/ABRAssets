@@ -15,6 +15,8 @@ public class CameraModel : MonoBehaviour
     public string message_tag = "camera model";
     public string cache_name = "world";
     public int button = 0;
+    public char modifier = 'n'; // n = none, c = ctrl, a = alt, s = shift
+
     public float mouseRotationSensitivity = .1f;
     public float mouseMovementSensitivity = 2f;
     protected Vector3 lastPosition;
@@ -167,11 +169,14 @@ public class CameraModel : MonoBehaviour
     {
         bool save = false;
 
-        if (Input.GetMouseButtonDown(button))
+        if (Input.GetMouseButtonDown(button) &&
+            (modifier == 'n' ||
+            (modifier == 'c' && Input.GetKey(KeyCode.LeftControl)) ||
+            (modifier == 'a' && Input.GetKey(KeyCode.LeftAlt)) ||
+            (modifier == 's' && Input.GetKey(KeyCode.LeftShift))))
         {
             lastPosition = Input.mousePosition;
             mouseIsDown = true;
-
         }
         else if (mouseIsDown)
         {
@@ -226,6 +231,7 @@ public class CameraModel : MonoBehaviour
                 transform.rotation = setRotation;
                 return;
             }
+
 
             bool saveState = CameraController();
             if (saveState)
