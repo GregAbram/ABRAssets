@@ -1,7 +1,8 @@
 {
     "name": "TACC.ABRAssets.Runtime",
     "references": [
-        "ABRAssets.ABRAssets"
+        "ABRAssets.ABRAssets",
+        "IVLab"
     ],
     "includePlatforms": [
     ],
