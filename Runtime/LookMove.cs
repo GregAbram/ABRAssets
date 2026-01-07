@@ -6,6 +6,8 @@ using UnityEngine;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Diagnostics.Tracing;
 using System.Security.Cryptography;
+using System.Diagnostics;
+using System.Runtime.ExceptionServices;
 
 public class LookMove : CameraModel
 {
@@ -17,60 +19,68 @@ public class LookMove : CameraModel
 		{
 			transform.position = Vector3.zero;
 			transform.rotation = Quaternion.identity;
-			save = true;
+			return true;
 		}
 
-        bool b = Input.GetMouseButtonDown(button);
+        bool b = Input.GetMouseButton(button);
         if (mouseIsDown && !b)
         {
-            mouseIsDown = false;
-            saveState();
-            return;
+            //UnityEngine.Debug.Log("Mouse button released");
+			mouseIsDown = false;
+            return true;
         }
 
         bool c = Input.GetKey(KeyCode.LeftControl);
         bool a = Input.GetKey(KeyCode.LeftAlt);
         bool s = Input.GetKey(KeyCode.LeftShift);
-        if (b ||
+        if (b &&
             (modifier == 'n' && !c && !a && !s) ||
             (modifier == 'c' && c) ||
             (modifier == 'a' && a) ||
             (modifier == 's' && s))
 		{
-	        mouseIsDown = true;
-			lastPosition = Input.mousePosition;
-		}
-	
-	
-	    if (mouseIsDown)
-	    {
-            Vector3 currentPosition = Input.mousePosition;
-            Vector3 deltaPosition = currentPosition - lastPosition;
-			lastPosition = currentPosition;
-
-            float inputX = deltaPosition.x * mouseRotationSensitivity;
-            float inputY = deltaPosition.y * mouseRotationSensitivity;
-			if (inputX != 0 || inputY != 0)
+			if (! mouseIsDown)
 			{
-				Quaternion q_r, q_u;
-				q_r = Quaternion.AngleAxis(inputY, Camera.main.transform.right);
-				q_u = Quaternion.AngleAxis(-inputX, Camera.main.transform.up);
-				transform.rotation = q_r * q_u * transform.rotation;
-				transform.rotation = Quaternion.LookRotation(transform.forward, Vector3.up);
+				mouseIsDown = true;
+				lastPosition = Input.mousePosition;
+				UnityEngine.Debug.Log("Initial mouse button press");
+				return false;				
+			}
+			else
+			{
+				UnityEngine.Debug.Log("Mouse is down");
+				Vector3 currentPosition = Input.mousePosition;
+				Vector3 deltaPosition = currentPosition - lastPosition;
+				lastPosition = currentPosition;
+
+				float inputX = deltaPosition.x * mouseRotationSensitivity;
+				float inputY = deltaPosition.y * mouseRotationSensitivity;
+				if (inputX != 0 || inputY != 0)
+				{
+					Quaternion q_r, q_u;
+					q_r = Quaternion.AngleAxis(inputY, Camera.main.transform.right);
+					q_u = Quaternion.AngleAxis(-inputX, Camera.main.transform.up);
+					transform.rotation = q_r * q_u * transform.rotation;
+					transform.rotation = Quaternion.LookRotation(transform.forward, Vector3.up);
+				}
+				else
+				{
+					UnityEngine.Debug.Log("Not enough rotation input");
+				}
+				
+				float inputSW = Input.GetAxis("Mouse ScrollWheel") * mouseMovementSensitivity;
+				if (inputSW != 0)
+				{
+					if (Input.GetKey("space"))
+						transform.position += inputSW * transform.up;
+					else
+						transform.position += inputSW * transform.forward;
+				
+					save = true;
+
+				}				
 			}
 		}
-
-		float inputSW = Input.GetAxis("Mouse ScrollWheel") * mouseMovementSensitivity;
-		if (inputSW != 0)
-		{
-			if (Input.GetKey("space"))
-				transform.position += inputSW * transform.up;
-			else
-				transform.position += inputSW * transform.forward;
-		
-			save = true;
-
-		}	
 
 		return save;
      }

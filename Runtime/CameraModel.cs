@@ -45,7 +45,7 @@ public class CameraModel : MonoBehaviour
         public float px, py, pz, rx, ry, rz, rw;
     }
 
-    void SaveState()
+    protected void SaveState()
     {
         if (! cacheCamera)
             return;
@@ -169,56 +169,53 @@ public class CameraModel : MonoBehaviour
     {
         bool save = false;
 
-        bool b = Input.GetMouseButtonDown(button);
+        bool b = Input.GetMouseButton(button);
         if (mouseIsDown && !b)
         {
             mouseIsDown = false;
-            saveState();
-            return;
+            return true;
         }
 
         bool c = Input.GetKey(KeyCode.LeftControl);
         bool a = Input.GetKey(KeyCode.LeftAlt);
         bool s = Input.GetKey(KeyCode.LeftShift);
-        if (b ||
+        if (b &&
             (modifier == 'n' && !c && !a && !s) ||
             (modifier == 'c' && c) ||
             (modifier == 'a' && a) ||
             (modifier == 's' && s))
         {
-            lastPosition = Input.mousePosition;
-            mouseIsDown = true;
-        }
-        else if (mouseIsDown)
-        {
-            Vector3 currentPosition = Input.mousePosition;
-            Vector3 deltaPosition = currentPosition - lastPosition;
-
-            float inputX = deltaPosition.x * mouseRotationSensitivity;
-            float inputY = deltaPosition.y * mouseRotationSensitivity;
-
-            if (inputX != 0 || inputY != 0)
+            if (! mouseIsDown)
             {
-                Quaternion q_r, q_u;
-
-                q_r = Quaternion.AngleAxis(inputY, Camera.main.transform.right);
-                q_u = Quaternion.AngleAxis(-inputX, Camera.main.transform.up);
-
-                transform.rotation = q_r * q_u * transform.rotation;              
+                lastPosition = Input.mousePosition;
+                mouseIsDown = true;
             }
-        }
-            
-        float inputSW = Input.GetAxis("Mouse ScrollWheel") * mouseMovementSensitivity;
-        if (inputSW != 0)
-        {
-            transform.position += inputSW * transform.forward;
-            save = true;
-        }
+            else
+            {
+                Vector3 currentPosition = Input.mousePosition;
+                Vector3 deltaPosition = currentPosition - lastPosition;
+                lastPosition = currentPosition;
 
-        if (Input.GetMouseButtonUp(button))
-        {
-            mouseIsDown = false;
-            save = true;
+                float inputX = deltaPosition.x * mouseRotationSensitivity;
+                float inputY = deltaPosition.y * mouseRotationSensitivity;
+
+                if (inputX != 0 || inputY != 0)
+                {
+                    Quaternion q_r, q_u;
+
+                    q_r = Quaternion.AngleAxis(inputY, Camera.main.transform.right);
+                    q_u = Quaternion.AngleAxis(-inputX, Camera.main.transform.up);
+
+                    transform.rotation = q_r * q_u * transform.rotation;              
+                }
+            }
+            
+            float inputSW = Input.GetAxis("Mouse ScrollWheel") * mouseMovementSensitivity;
+            if (inputSW != 0)
+            {
+                transform.position += inputSW * transform.forward;
+                save = true;
+            }
         }
 
         return save;

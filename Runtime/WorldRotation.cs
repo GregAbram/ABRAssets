@@ -9,7 +9,7 @@ using IVLab.ABREngine;
 public class WorldRotation : MonoBehaviour
 {
     public string message_tag = "world rotation";
-    public int button = 1;
+    public int button = 0;
     public char modifier = 'n'; // n = none, c = ctrl, a = alt, s = shift
 
     public float worldRotationSensitivity = 2f;
@@ -110,11 +110,10 @@ public class WorldRotation : MonoBehaviour
         if (EventSystem.current.IsPointerOverGameObject())
             return;
 
-        bool changed = false;
 
 		if (tdm.IsMaster())
 		{   
-            bool b = Input.GetMouseButtonDown(button);
+            bool b = Input.GetMouseButton(button);
             if (mouseIsDown && !b)
             {
                 mouseIsDown = false;
@@ -125,64 +124,65 @@ public class WorldRotation : MonoBehaviour
             bool c = Input.GetKey(KeyCode.LeftControl);
             bool a = Input.GetKey(KeyCode.LeftAlt);
             bool s = Input.GetKey(KeyCode.LeftShift);
-            if (b ||
+            if (b &&
                 (modifier == 'n' && !c && !a && !s) ||
                 (modifier == 'c' && c) ||
                 (modifier == 'a' && a) ||
                 (modifier == 's' && s))
-			{
-				lastPosition = Input.mousePosition;
-				mouseIsDown = true;
-			}
-			else if (mouseIsDown)
-			{
-				Vector3 currentPosition = Input.mousePosition;
-				Vector3 deltaPosition = currentPosition - lastPosition;
-
-				float inputX = deltaPosition.x * worldRotationSensitivity;
-				float inputY = deltaPosition.y * worldRotationSensitivity;
-
-                if (inputX != 0 || inputY != 0)
-                {
-                    changed = true;
-                    
-                    Quaternion q_r, q_u;
-
-                    if(Input.GetKey("space"))
-                        q_r = Quaternion.AngleAxis(inputY, mainCamera.transform.forward);
-                    else
-                        q_r = Quaternion.AngleAxis(inputY, mainCamera.transform.right);
-
-                    q_u = Quaternion.AngleAxis(-inputX, mainCamera.transform.up);
-
-                    transform.rotation = q_r * q_u * transform.rotation;
-                }
-
-				lastPosition = currentPosition;
-			}
-
-			if (changed && tdm.NumberOfTiles() > 0)
             {
-                WorldTransform wx = new WorldTransform();
-                var fmt = new BinaryFormatter();
-                var ms = new MemoryStream();
+                if (!mouseIsDown)
+                {
+                    lastPosition = Input.mousePosition;
+                    mouseIsDown = true;
+                }
+                else 
+                {
+                    Vector3 currentPosition = Input.mousePosition;
+                    Vector3 deltaPosition = currentPosition - lastPosition;
+
+                    float inputX = deltaPosition.x * worldRotationSensitivity;
+                    float inputY = deltaPosition.y * worldRotationSensitivity;
+
+                    if (inputX != 0 || inputY != 0)
+                    {                        
+                        Quaternion q_r, q_u;
+
+                        if(Input.GetKey("space"))
+                            q_r = Quaternion.AngleAxis(inputY, mainCamera.transform.forward);
+                        else
+                            q_r = Quaternion.AngleAxis(inputY, mainCamera.transform.right);
+
+                        q_u = Quaternion.AngleAxis(-inputX, mainCamera.transform.up);
+
+                        transform.rotation = q_r * q_u * transform.rotation;
+                    }
+
+                    lastPosition = currentPosition;
+                }
             
-                Vector3 p;
-                Quaternion r;
-                transform.GetPositionAndRotation(out p, out r);
+                if (tdm.NumberOfTiles() > 0)
+                {
+                    WorldTransform wx = new WorldTransform();
+                    var fmt = new BinaryFormatter();
+                    var ms = new MemoryStream();
+                
+                    Vector3 p;
+                    Quaternion r;
+                    transform.GetPositionAndRotation(out p, out r);
 
-                wx.px = p.x;
-                wx.py = p.y;
-                wx.pz = p.z;
-                wx.rx = r.x;
-                wx.ry = r.y;
-                wx.rz = r.z;
-                wx.rw = r.w;
+                    wx.px = p.x;
+                    wx.py = p.y;
+                    wx.pz = p.z;
+                    wx.rx = r.x;
+                    wx.ry = r.y;
+                    wx.rz = r.z;
+                    wx.rw = r.w;
 
-                fmt.Serialize(ms, wx);
-                byte[] message = ms.ToArray();
-                tdm.messageManager.SendMessage(message_tag, message);
-            }	
+                    fmt.Serialize(ms, wx);
+                    byte[] message = ms.ToArray();
+                    tdm.messageManager.SendMessage(message_tag, message);
+                }	
+            }
 		} 
 		else
 		{
