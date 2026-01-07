@@ -4,6 +4,6 @@
   "version": "1.0.0",
   "unity": "2022.3",
   "author": { "name": "Greg Abram", "email": "gda@tacc.utexas.edu" },
-  "description": "A collection of assets useful when building ABR-enabled applications etc.   Also tiled display wall management",
-  "dependencies": { "com.unity.inputsystem": "1.7.0", "tacc.unity.abrengine": "2023.3.0"}
+  "description": "A collection of assets useful when building ABR-enabled applications etc.   Also tiled display wall management"
 }
+
