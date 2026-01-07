@@ -21,10 +21,6 @@ public class LookMove : CameraModel
 		}
 
         if (Input.GetMouseButtonDown(button) &&
-            (modifier == 'n' && 
-				(!Input.GetKey(KeyCode.LeftControl) && 
-				 !Input.GetKey(KeyCode.LeftAlt) && 
-				 !Input.GetKey(KeyCode.LeftShift))) ||
             (modifier == 'c' && Input.GetKey(KeyCode.LeftControl)) ||
             (modifier == 'a' && Input.GetKey(KeyCode.LeftAlt)) ||
             (modifier == 's' && Input.GetKey(KeyCode.LeftShift)))
