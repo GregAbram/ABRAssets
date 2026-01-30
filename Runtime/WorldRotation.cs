@@ -4,8 +4,6 @@ using UnityEngine;
 using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using UnityEditor.Search;
-using UnityEditor.U2D;
 
 public class WorldRotation : MonoBehaviour
 {

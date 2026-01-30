@@ -4,9 +4,8 @@ using System;
 using System.IO;
 using UnityEngine;
 using System.Runtime.Serialization.Formatters.Binary;
-using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
-
+using UnityEngine.InputSystem;
 public class CameraModel : MonoBehaviour
 {
     public string message_tag = "camera model";

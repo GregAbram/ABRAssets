@@ -4,9 +4,8 @@ using System.Collections.Generic;
 using System.IO;
 using IVLab.ABREngine;
 using UnityEngine;
-using System.Threading;
 using UnityEngine.InputSystem;
-
+using System.Threading;
 
 public class CameraInterpolation : MonoBehaviour
 {
