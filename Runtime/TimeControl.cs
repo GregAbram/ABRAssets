@@ -1,9 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
+
 using IVLab.ABREngine;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class TimeControl : MonoBehaviour
 {
@@ -42,19 +40,27 @@ public class TimeControl : MonoBehaviour
         float  totFrames = fps * duration;
         float stepSize = 1.0f / totFrames;
 
-        //stepSize = 1.0f / 498.0f;
+#if ENABLE_INPUT_SYSTEM
+        bool u = Keyboard.current.upArrowKey.wasPressedThisFrame;
+        bool d = Keyboard.current.downArrowKey.wasPressedThisFrame;
+        bool p = Keyboard.current.pKey.wasPressedThisFrame;
 
-        if (Input.GetKeyDown(KeyCode.UpArrow))
+#else
+        bool u = Input.GetKeyDown(KeyCode.UpArrow);
+        bool d = Input.GetKeyDown(KeyCode.DownArrow);
+        bool p = Input.GetKeyDown(KeyCode.P);
+#endif 
+        if (u)
         {
             tLast = tLast + stepSize;
             ABREngine.Instance.SetScaleTime(tLast);
         }
-        else if (Input.GetKeyDown(KeyCode.DownArrow))
+        else if (d)
         {
             tLast = tLast - stepSize;
             ABREngine.Instance.SetScaleTime(tLast);
         }
-        else if (Input.GetKeyDown(KeyCode.P))
+        else if (p)
         {
             if (!running)
             {

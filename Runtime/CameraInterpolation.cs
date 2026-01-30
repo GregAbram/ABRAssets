@@ -1,13 +1,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.IO.Enumeration;
 using IVLab.ABREngine;
 using UnityEngine;
 using System.Threading;
-using System.Threading.Tasks;
+using UnityEngine.InputSystem;
+
 
 public class CameraInterpolation : MonoBehaviour
 {
@@ -76,7 +75,20 @@ public class CameraInterpolation : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.W))
+#if ENABLE_INPUT_SYSTEM
+        bool w = Keyboard.current.wKey.wasPressedThisFrame;
+        bool k = Keyboard.current.kKey.wasPressedThisFrame;
+        bool s = Keyboard.current.sKey.wasPressedThisFrame;
+        bool l = Keyboard.current.lKey.wasPressedThisFrame;
+        bool c = Keyboard.current.cKey.wasPressedThisFrame;
+#else
+        bool w = Input.GetKeyDown(KeyCode.W);
+        bool k = Input.GetKeyDown(KeyCode.K);
+        bool s = Input.GetKeyDown(KeyCode.S);
+        bool l = Input.GetKeyDown(KeyCode.L);
+        bool c = Input.GetKeyDown(KeyCode.C);
+#endif
+        if (w)
         {
             if (saving)
                 saving = false;
@@ -86,7 +98,7 @@ public class CameraInterpolation : MonoBehaviour
                 frameNo = 0;
             }
         }
-        else if (Input.GetKeyDown(KeyCode.K))
+        else if (k)
         {
             CState cState = new CState();
 
@@ -101,7 +113,7 @@ public class CameraInterpolation : MonoBehaviour
             keyFrames.Add(cState);
 
         }
-        else if (Input.GetKeyDown(KeyCode.S))
+        else if (s)
         {
             using (StreamWriter sw = new StreamWriter(fileName, append: false))
             {
@@ -113,11 +125,11 @@ public class CameraInterpolation : MonoBehaviour
                 }
             }
         }
-        else if (Input.GetKeyDown(KeyCode.L))
+        else if (l)
         {
             LoadKeyFrames();
         }
-        else if (Input.GetKeyDown(KeyCode.C))
+        else if (c)
         {
             keyFrames.Clear();
             totalTime = 0;

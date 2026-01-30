@@ -1,14 +1,11 @@
+
 using System;
 
 using System.IO;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using System.Runtime.Serialization.Formatters.Binary;
-using IVLab.ABREngine;
-//using UnityEngine.XR.Interaction.Toolkit.Locomotion;
-using System.Runtime.InteropServices;
-using System.Diagnostics.Tracing;
-using Unity.VisualScripting;
+using UnityEngine.InputSystem;
+using UnityEngine.EventSystems;
 
 public class CameraModel : MonoBehaviour
 {
@@ -19,7 +16,13 @@ public class CameraModel : MonoBehaviour
 
     public float mouseRotationSensitivity = .1f;
     public float mouseMovementSensitivity = 2f;
+
+#if ENABLE_INPUT_SYSTEM
+    protected Vector2 lastPosition;
+#else
     protected Vector3 lastPosition;
+#endif
+
     protected bool mouseIsDown = false;
     string cameraFile = "camera";
     Configurator cfg = null;
@@ -96,28 +99,13 @@ public class CameraModel : MonoBehaviour
  
             Camera cam = GetComponent<Camera>(); 
             cam.projectionMatrix = PerspectiveOffCenter(ws * l, ws * r, ws * b, ws * t, cam.nearClipPlane, cam.farClipPlane);
-#if false
-            for (var i = 0; i < 4; i++)
-                Debug.LogFormat("M{0} {1} {2} {3} {4}", i, 
-                    cam.projectionMatrix[i, 0],
-                    cam.projectionMatrix[i, 1],
-                    cam.projectionMatrix[i, 2],
-                    cam.projectionMatrix[i, 3]);
-#endif
+
             return;
         }
         else if (first)
         {
             first = false;
             Camera cam = GetComponent<Camera>(); 
-#if false
-            for (var i = 0; i < 4; i++)
-                Debug.LogFormat("M{0} {1} {2} {3} {4}", i, 
-                    cam.projectionMatrix[i, 0],
-                    cam.projectionMatrix[i, 1],
-                    cam.projectionMatrix[i, 2],
-                    cam.projectionMatrix[i, 3]);
-#endif 
         }
 
         if (cfg.GetString("-cameraCache", out cameraFile))
@@ -169,65 +157,115 @@ public class CameraModel : MonoBehaviour
     {
         bool save = false;
 
+#if ENABLE_INPUT_SYSTEM
+        bool b = false;
+        switch (button)
+        {
+            case 0: b =  Mouse.current.leftButton.wasPressedThisFrame; break;
+            case 1: b =  Mouse.current.rightButton.wasPressedThisFrame; break;
+            case 2: b =  Mouse.current.middleButton.wasPressedThisFrame; break;
+        }
+
+        bool c = Keyboard.current.ctrlKey.isPressed;
+        bool a = Keyboard.current.altKey.isPressed;
+        bool s = Keyboard.current.shiftKey.isPressed;        
+
+        if (b && ((modifier == 'n' && !c && !a && !s) || (modifier == 'c' && c) || (modifier == 'a' && a) || (modifier == 's' && s)))
+        {
+            mouseIsDown = true;
+            lastPosition = Mouse.current.position.ReadValue();
+        }
+        
+        if (!b && ((modifier == 'n' && !c && !a && !s) || (modifier == 'c' && c) || (modifier == 'a' && a) || (modifier == 's' && s)))
+        { 
+            switch (button)
+            {
+                case 0: b =  Mouse.current.leftButton.wasReleasedThisFrame; break;
+                case 1: b =  Mouse.current.rightButton.wasReleasedThisFrame; break;
+                case 2: b =  Mouse.current.middleButton.wasReleasedThisFrame; break;
+            }
+
+            if (b)
+                mouseIsDown = false;
+        }  
+#else        
         bool b = Input.GetMouseButton(button);
-        if (mouseIsDown && !b)
+        bool c = Input.GetKey(KeyCode.LeftControl);
+        bool a = Input.GetKey(KeyCode.LeftAlt);
+        bool s = Input.GetKey(KeyCode.LeftShift);        
+        
+        if (!b && mouseIsDown)
         {
             mouseIsDown = false;
             return true;
         }
-
-        bool c = Input.GetKey(KeyCode.LeftControl);
-        bool a = Input.GetKey(KeyCode.LeftAlt);
-        bool s = Input.GetKey(KeyCode.LeftShift);
-        if (b &&
-            (modifier == 'n' && !c && !a && !s) ||
-            (modifier == 'c' && c) ||
-            (modifier == 'a' && a) ||
-            (modifier == 's' && s))
+        else if (b && ((modifier == 'n' && !c && !a && !s) || (modifier == 'c' && c) || (modifier == 'a' && a) || (modifier == 's' && s)))
         {
             if (! mouseIsDown)
             {
-                lastPosition = Input.mousePosition;
+                lastPosition =  Input.mousePosition;
                 mouseIsDown = true;
             }
-            else
-            {
-                Vector3 currentPosition = Input.mousePosition;
-                Vector3 deltaPosition = currentPosition - lastPosition;
-                lastPosition = currentPosition;
-
-                float inputX = deltaPosition.x * mouseRotationSensitivity;
-                float inputY = deltaPosition.y * mouseRotationSensitivity;
-
-                if (inputX != 0 || inputY != 0)
-                {
-                    Quaternion q_r, q_u;
-
-                    q_r = Quaternion.AngleAxis(inputY, Camera.main.transform.right);
-                    q_u = Quaternion.AngleAxis(-inputX, Camera.main.transform.up);
-
-                    transform.rotation = q_r * q_u * transform.rotation;              
-                }
-            }
-            
-            float inputSW = Input.GetAxis("Mouse ScrollWheel") * mouseMovementSensitivity;
-            if (inputSW != 0)
-            {
-                transform.position += inputSW * transform.forward;
-                save = true;
-            }
         }
+#endif
+
+        if (mouseIsDown)
+        {
+#if ENABLE_INPUT_SYSTEM
+            Vector2 currentPosition = Mouse.current.position.ReadValue();
+            Vector2 deltaPosition = currentPosition - lastPosition;
+            lastPosition = currentPosition;
+
+            float inputX = deltaPosition.x * mouseRotationSensitivity;
+            float inputY = deltaPosition.y * mouseRotationSensitivity;
+#else
+            Vector3 currentPosition = Input.mousePosition;
+            Vector3 deltaPosition = currentPosition - lastPosition;
+            lastPosition = currentPosition;
+
+            float inputX = deltaPosition.x * mouseRotationSensitivity;
+            float inputY = deltaPosition.y * mouseRotationSensitivity;
+#endif
+            if (inputX != 0 || inputY != 0)
+            {
+                Quaternion q_r, q_u;
+
+                q_r = Quaternion.AngleAxis(inputY, Camera.main.transform.right);
+                q_u = Quaternion.AngleAxis(-inputX, Camera.main.transform.up);
+
+                transform.rotation = q_r * q_u * transform.rotation;    
+                save = true;  
+            }        
+        }
+            
+#if ENABLE_INPUT_SYSTEM
+        Vector2 scroll = Mouse.current.scroll.ReadValue();
+        float inputSW = scroll.y;
+#else
+        float inputSW = Input.GetAxis("Mouse ScrollWheel") * mouseMovementSensitivity;
+#endif
+
+        if (inputSW != 0)
+        {
+            transform.position += inputSW * transform.forward;
+            save = true;
+        }
+
 
         return save;
     }
 
     void Update()
     {
-        if (EventSystem.current.IsPointerOverGameObject())
+#if true
+        if (EventSystem.current && EventSystem.current.IsPointerOverGameObject())
             return;
-
+#endif
         if (tdm.IsMaster())
         {
+            if (Keyboard.current.sKey.wasPressedThisFrame) { Debug.Log("S pressed"); }
+
+#if false
             if (Input.GetKeyDown(KeyCode.S))
             {
                 transform.GetPositionAndRotation(out setPosition, out setRotation);
@@ -239,6 +277,7 @@ public class CameraModel : MonoBehaviour
                 transform.rotation = setRotation;
                 return;
             }
+#endif
 
 
             bool saveState = CameraController();
@@ -325,4 +364,3 @@ public class CameraModel : MonoBehaviour
         return m;
     }
 }
-

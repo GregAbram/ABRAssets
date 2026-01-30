@@ -5,6 +5,8 @@ using System.IO;
 using Unity.VisualScripting;
 using UnityEngine;
 using IVLab.ABREngine;
+using UnityEngine.InputSystem;
+
 
 public class ScreenShot : MonoBehaviour
 {
@@ -37,7 +39,13 @@ public class ScreenShot : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.A) && screenshot_cache != "")
+#if ENABLE_INPUT_SYSTEM
+        bool a = Keyboard.current.aKey.wasPressedThisFrame;
+#else
+        bool a = Input.GetKeyDown(KeyCode.A);
+#endif 
+        
+        if (a && screenshot_cache != "")
         {
             int multiplier;
 
