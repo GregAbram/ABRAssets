@@ -1,6 +1,7 @@
 {
   "name": "ABRAssets",
   "references": [
+    "IVLab.ABREngine",
     "Unity.InputSystem"
   ],
   "includePlatforms": [],
