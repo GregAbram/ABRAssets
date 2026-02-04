@@ -6,6 +6,7 @@ using UnityEngine;
 using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using Codice.Client.BaseCommands.Merge;
 public class CameraModel : MonoBehaviour
 {
     public string message_tag = "camera model";
@@ -169,13 +170,13 @@ public class CameraModel : MonoBehaviour
         bool a = Keyboard.current.altKey.isPressed;
         bool s = Keyboard.current.shiftKey.isPressed;        
 
-        if (b && ((modifier == 'n' && !c && !a && !s) || (modifier == 'c' && c) || (modifier == 'a' && a) || (modifier == 's' && s)))
+        if (b && ((modifier == 'n' && !c && !a && !s) || (modifier == 'c' && c && !a && !s) || (modifier == 'a' && !c && a && !s) || (modifier == 's' && !a && !c && s)))
         {
             mouseIsDown = true;
             lastPosition = Mouse.current.position.ReadValue();
         }
         
-        if (!b && ((modifier == 'n' && !c && !a && !s) || (modifier == 'c' && c) || (modifier == 'a' && a) || (modifier == 's' && s)))
+        if (!b && ((modifier == 'n' && !c && !a && !s) || (modifier == 'c' && c && !a && !s) || (modifier == 'a' && !c && a && !s) || (modifier == 's' && !a && !c && s)))
         { 
             switch (button)
             {
@@ -198,7 +199,8 @@ public class CameraModel : MonoBehaviour
             mouseIsDown = false;
             return true;
         }
-        else if (b && ((modifier == 'n' && !c && !a && !s) || (modifier == 'c' && c) || (modifier == 'a' && a) || (modifier == 's' && s)))
+        else if (b && ((modifier == 'n' && !c && !a && !s) || (modifier == 'c' && c && !a && !s) || (modifier == 'a' && !c && a && !s) || (modifier == 's' && !a && !c && s)))
+
         {
             if (! mouseIsDown)
             {

@@ -128,15 +128,14 @@ public class WorldRotation : MonoBehaviour
 
             bool c = Keyboard.current.ctrlKey.isPressed;
             bool a = Keyboard.current.altKey.isPressed;
-            bool s = Keyboard.current.shiftKey.isPressed;        
+            bool s = Keyboard.current.shiftKey.isPressed; 
 
-            if (b && ((modifier == 'n' && !c && !a && !s) || (modifier == 'c' && c) || (modifier == 'a' && a) || (modifier == 's' && s)))
+            if (b && ((modifier == 'n' && !c && !a && !s) || (modifier == 'c' && c && !a && !s) || (modifier == 'a' && !c && a && !s) || (modifier == 's' && !a && !c && s)))
             {
                 mouseIsDown = true;
                 lastPosition = Mouse.current.position.ReadValue();
-            }
-            
-            if (!b && ((modifier == 'n' && !c && !a && !s) || (modifier == 'c' && c) || (modifier == 'a' && a) || (modifier == 's' && s)))
+            }       
+            else if (!b && ((modifier == 'n' && !c && !a && !s) || (modifier == 'c' && c && !a && !s) || (modifier == 'a' && !c && a && !s) || (modifier == 's' && !a && !c && s)))
             { 
                 switch (button)
                 {
@@ -159,7 +158,8 @@ public class WorldRotation : MonoBehaviour
                 mouseIsDown = false;
                 return true;
             }
-            else if (b && ((modifier == 'n' && !c && !a && !s) || (modifier == 'c' && c) || (modifier == 'a' && a) || (modifier == 's' && s)))
+            else if (b && ((modifier == 'n' && !c && !a && !s) || (modifier == 'c' && c && !a && !s) || (modifier == 'a' && !c && a && !s) || (modifier == 's' && !a && !c && s)))
+
             {
                 if (! mouseIsDown)
                 {
