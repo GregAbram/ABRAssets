@@ -3,10 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using IVLab.ABREngine;
 using Unity.VisualScripting;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
-//public class PickHandler : IVLab.ABREngine.ABRPicker.ABRPickHandler
-public class PickHandler : IVLab.ABREngine.ABRPicker.ABRPickHandler
+public class PickHandler : ABRPicker.ABRPickHandler
 {
     public override void onPick(ABRPicker.ABRPick pick)
     {
@@ -41,7 +41,7 @@ public class PickHandler : IVLab.ABREngine.ABRPicker.ABRPickHandler
             sdi.toggleHilite(); 
             SurfaceDatasetAccessor sda = new SurfaceDatasetAccessor(pick.dataset, idi);
 
-            if (sda.GetScalarValue(pick, out float v))
+            if (sda.GetScalarValue(pick.id, pick.barycentric_weights, out float v))
                 msg = msg + $"Scalar value: {v}\n";
         }
 

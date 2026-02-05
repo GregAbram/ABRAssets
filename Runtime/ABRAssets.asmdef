@@ -3,6 +3,7 @@
   "references": [
     "IVLab.ABREngine.Runtime",
     "IVLab.Utilities.Runtime",
+    "Unity.XR.Interaction.Toolkit",
     "Unity.InputSystem"
   ],
   "includePlatforms": [],
