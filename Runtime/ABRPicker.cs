@@ -123,9 +123,9 @@ public class ABRPicker : MonoBehaviour
             Vector2 mousePosition = Mouse.current.position.ReadValue();
             switch (button)
             {
-                case 1: b =  Mouse.current.leftButton.wasPressedThisFrame; break;
-                case 2: b =  Mouse.current.rightButton.wasPressedThisFrame; break;
-                case 3: b =  Mouse.current.middleButton.wasPressedThisFrame; break;
+                case 0: b =  Mouse.current.leftButton.wasPressedThisFrame; break;
+                case 1: b =  Mouse.current.rightButton.wasPressedThisFrame; break;
+                case 2: b =  Mouse.current.middleButton.wasPressedThisFrame; break;
             }
 
             c = Keyboard.current.ctrlKey.isPressed;
