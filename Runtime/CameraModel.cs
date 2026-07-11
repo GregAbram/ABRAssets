@@ -241,7 +241,7 @@ public class CameraModel : MonoBehaviour
             
 #if ENABLE_INPUT_SYSTEM
         Vector2 scroll = Mouse.current.scroll.ReadValue();
-        float inputSW = scroll.y;
+        float inputSW = scroll.y * mouseMovementSensitivity;
 #else
         float inputSW = Input.GetAxis("Mouse ScrollWheel") * mouseMovementSensitivity;
 #endif
