@@ -15,7 +15,7 @@ public class CameraModel : MonoBehaviour
     public char modifier = 'n'; // n = none, c = ctrl, a = alt, s = shift
 
     public float mouseRotationSensitivity = .1f;
-    public float mouseMovementSensitivity = 2f;
+    public float mouseMovementSensitivity = 0.05f;
 
 #if ENABLE_INPUT_SYSTEM
     protected Vector2 lastPosition;
