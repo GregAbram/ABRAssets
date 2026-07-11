@@ -4,9 +4,7 @@ using UnityEngine;
 using System;
 using System.IO;
 using System.Linq; 
-using Unity.VisualScripting;
-using UnityEngine.Rendering;
-using Newtonsoft.Json;
+
 using Newtonsoft.Json.Linq;
 
 public class Configurator : ScriptableObject
